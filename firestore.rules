@@ -25,7 +25,11 @@ service cloud.firestore {
     }
 
     match /playerIds/{playerId} {
-      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      // A signed-in user may check whether an ID is unused, but may only read an existing ID they own.
+      allow get: if signedIn()
+        && (!exists(/databases/$(database)/documents/playerIds/$(playerId))
+          || resource.data.uid == request.auth.uid);
+      allow list: if false;
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['uid','createdAt']);
