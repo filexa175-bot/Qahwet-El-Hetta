@@ -28,7 +28,7 @@ for path in files:
         raise SystemExit(f"Cannot locate persistence function in {path}")
 
     start = src.index("function startScreen(){")
-    end = src.index("\\nfunction go(){", start)
+    end = src.index("\nfunction go(){", start)
     src = src[:start] + home + src[end:]
 
     if "qh-boot-screen" not in src:
