@@ -16,7 +16,7 @@ cfg.write_text(json.dumps(data,ensure_ascii=False,indent=2)+"\n")
 for name in ["www/index.html","www/game.html"]:
  p=root/name
  s=p.read_text()
- tag='<script src="firebase-auth.js"></script>'
+ tag='<script>window.QHApplyProfile=(p)=>{try{S.playerName=p.displayName||S.playerName;S.playerId=p.playerId||S.playerId;S.ch=Number.isInteger(p.avatarIndex)?p.avatarIndex:S.ch;S.profileStep=1;persist();if(typeof startScreen==="function")startScreen()}catch(e){console.error(e)}};window.QHApplySignedOut=()=>{S.playerId="";persist();startScreen()};</script><script src="firebase-auth.js"></script>'
  if tag not in s:
   s=s.replace("</body>",tag+"\\n</body>")
  p.write_text(s)
