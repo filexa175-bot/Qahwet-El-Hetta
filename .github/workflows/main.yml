@@ -73,14 +73,18 @@ jobs:
         run: python3 ../scripts/patch-background-music.py
         working-directory: app-source
 
-      - name: Install dependencies
+      - name: Install dependencies and bundle Firebase auth
         working-directory: app-source
-        run: npm install
+        run: |
+          python3 ../scripts/patch-firebase-auth.py
+          npm install
+          npx esbuild firebase-auth-entry.js --bundle --platform=browser --format=iife --outfile=www/firebase-auth.js
 
       - name: Prepare Android project
         working-directory: app-source
         run: |
           npx cap add android
+          python3 ../scripts/prepare-firebase-native.py
           npx cap sync android
           unzip -o -q ../android-icons.zip -d android/app/src/main/res/
           cp ../google-services.json android/app/google-services.json
