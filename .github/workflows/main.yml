@@ -45,7 +45,7 @@ jobs:
           unzip -q "$SOURCE_ZIP" -d app-source
 
       - name: Apply background music lifecycle fix
-        run: python3 scripts/patch-background-music.py
+        run: python3 ../scripts/patch-background-music.py
         working-directory: app-source
 
       - name: Install dependencies
