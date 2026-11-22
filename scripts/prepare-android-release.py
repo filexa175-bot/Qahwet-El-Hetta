@@ -39,13 +39,18 @@ if "signingConfigs" not in app_text:
 """
     app_text = app_text[:build_types.start()] + signing + app_text[build_types.start():]
 
-release_block = re.search(r"(?s)release\s*\{.*?\n\s*\}", app_text)
+build_types_pos = re.search(r"(?m)^\s*buildTypes\s*\{", app_text)
+if not build_types_pos:
+    raise SystemExit("Could not locate app buildTypes block.")
+release_block = re.search(r"(?s)release\s*\{.*?\n\s*\}", app_text[build_types_pos.start():])
 if not release_block:
     raise SystemExit("Could not locate release buildType block.")
-block = release_block.group(0)
+release_block_start = build_types_pos.start() + release_block.start()
+release_block_end = build_types_pos.start() + release_block.end()
+block = app_text[release_block_start:release_block_end]
 if "signingConfig" not in block:
     block_new = block[:-1] + "        signingConfig signingConfigs.release\n    }"
-    app_text = app_text[:release_block.start()] + block_new + app_text[release_block.end():]
+    app_text = app_text[:release_block_start] + block_new + app_text[release_block_end:]
 
 root_gradle.write_text(root_text)
 app_gradle.write_text(app_text)
