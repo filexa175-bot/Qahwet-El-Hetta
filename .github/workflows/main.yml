@@ -1,0 +1,66 @@
+
+name: Build Qahwet El Hetta APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Extract uploaded project ZIP
+        run: |
+          mkdir -p bundle
+          unzip -q qahwet_elhetta_github_repo_upload.zip -d bundle
+
+          SOURCE_ZIP=$(find bundle -type f -name "qahwa_android_source.zip" -print -quit)
+
+          if [ -z "$SOURCE_ZIP" ]; then
+            echo "Android source ZIP was not found."
+            exit 1
+          fi
+
+          mkdir app-source
+          unzip -q "$SOURCE_ZIP" -d app-source
+
+      - name: Install dependencies
+        working-directory: app-source
+        run: npm install
+
+      - name: Prepare Android project
+        working-directory: app-source
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Build APK
+        working-directory: app-source/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: qahwet-el-hetta-debug-apk
+          path: app-source/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          
