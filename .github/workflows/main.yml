@@ -50,7 +50,7 @@ jobs:
           echo "=== HTML ENTRY FILES ==="
           find . -maxdepth 3 -type f -name '*.html' ! -path './node_modules/*' -print
           echo "=== JS/CSS SOURCE FILE SIZES ==="
-          find . -maxdepth 4 -type f \\( -name '*.js' -o -name '*.mjs' -o -name '*.css' \\) ! -path './node_modules/*' -printf '%p %s bytes\\n' | sort | head -200
+          find . -maxdepth 4 -type f ! -path "./node_modules/*" | grep -E "\\.(js|mjs|css)$" | sort | head -200 | while IFS= read -r f; do wc -c "$f"; done
           echo "=== MAIN HTML CONTENT (IF PRESENT) ==="
           for f in index.html www/index.html public/index.html; do
             if [ -f "$f" ]; then echo "--- $f ---"; sed -n '1,260p' "$f"; fi
