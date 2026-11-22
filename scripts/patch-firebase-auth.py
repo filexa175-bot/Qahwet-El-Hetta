@@ -10,7 +10,7 @@ pkg["dependencies"]["firebase"]="^11.10.0"
 
 cfg=root/"capacitor.config.json"
 data=json.loads(cfg.read_text())
-data.setdefault("plugins",{})["FirebaseAuthentication"]={"providers":["google.com"],"skipNativeAuth":False}
+data.setdefault("plugins",{})["FirebaseAuthentication"]={"providers":["google.com"],"skipNativeAuth":True}
 cfg.write_text(json.dumps(data,ensure_ascii=False,indent=2)+"\n")
 
 for name in ["www/index.html","www/game.html"]:
@@ -20,4 +20,4 @@ for name in ["www/index.html","www/game.html"]:
  if tag not in s:
   s=s.replace("</body>",tag+"\\n</body>")
  p.write_text(s)
-print("Firebase JS and native auth configuration prepared")
+print("Firebase JS SDK owns the authenticated session; native Google sign-in skips native auth.")
