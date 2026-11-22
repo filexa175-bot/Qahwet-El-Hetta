@@ -40,6 +40,30 @@ jobs:
           mkdir app-source
           unzip -q "$SOURCE_ZIP" -d app-source
 
+      - name: Inspect extracted application source
+        working-directory: app-source
+        run: |
+          echo "=== SOURCE FILE TREE ==="
+          find . -maxdepth 4 -type f ! -path './node_modules/*' ! -path './.git/*' | sort | head -300
+          echo "=== PACKAGE.JSON ==="
+          if [ -f package.json ]; then cat package.json; fi
+          echo "=== HTML ENTRY FILES ==="
+          find . -maxdepth 3 -type f -name '*.html' ! -path './node_modules/*' -print
+          echo "=== JS/CSS SOURCE FILE SIZES ==="
+          find . -maxdepth 4 -type f \\( -name '*.js' -o -name '*.mjs' -o -name '*.css' \\) ! -path './node_modules/*' -printf '%p %s bytes\\n' | sort | head -200
+          echo "=== MAIN HTML CONTENT (IF PRESENT) ==="
+          for f in index.html www/index.html public/index.html; do
+            if [ -f "$f" ]; then echo "--- $f ---"; sed -n '1,260p' "$f"; fi
+          done
+
+      - name: Upload extracted source for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: qahwet-el-hetta-extracted-source
+          path: app-source/
+          if-no-files-found: error
+          retention-days: 3
+
       - name: Apply background music lifecycle fix
         run: python3 ../scripts/patch-background-music.py
         working-directory: app-source
