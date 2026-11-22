@@ -1,17 +1,20 @@
 function startScreen(){
-  G=null;const _o=document.querySelector('.start'),_y=_o?_o.scrollTop:0;
+  G=null;
+  const step=S.profileStep||1;
   $('app').innerHTML=`<div class="start neo-home">
-    <div class="brand-mark">Powered by <b>Filexawy</b></div><button class="ic gear" aria-label="الإعدادات" onclick="S.set=true;startScreen()">⚙️</button>
-    <header class="hero"><div class="hero-kicker"><span></span> اللَمّة ليها حكاية <span></span></div><h1>قهوة الحتة</h1><p>اختار قعدتك… واللعب علينا</p><div class="hero-cup">☕</div></header>
-    <section class="profile neo-panel"><div class="section-heading"><span class="step">01</span><div><h3>لاعب القهوة</h3><small>ملف محلي محفوظ على هذا الجهاز</small></div></div>
+    <div class="brand-mark">Powered by <b>Filexawy</b></div>
+    <header class="hero"><div class="hero-kicker"><span></span> اللَمّة ليها حكاية <span></span></div><h1>قهوة الحتة</h1><p>${step===1?'خلّينا نتعرف عليك الأول':'اختار هتقعد تلعب مع مين'}</p><div class="hero-cup">☕</div></header>
+    <div class="step-progress"><span class="${step===1?'active':''}">١ · بياناتك</span><i></i><span class="${step===2?'active':''}">٢ · اختار لعبتك</span></div>
+    ${step===1?`<section class="profile neo-panel"><div class="section-heading"><span class="step">01</span><div><h3>اسمك في القهوة</h3><small>الاسم اللي أصحابك هيشوفوه</small></div></div>
       <input class="name-input" maxlength="18" value="${esc(S.playerName)}" placeholder="اكتب اسمك هنا..." oninput="S.playerName=this.value;persist()">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0;color:#dce8fa;font-size:12px;direction:ltr"><b>PLAYER ID · ${esc(S.playerId)}</b><button class="sec" style="padding:6px 9px" onclick="copyPlayerId()">نسخ المعرف</button></div>
-      <div class="section-heading avatar-heading"><span class="step">02</span><div><h3>شخصيتك</h3><small>اختار الشخصية اللي هتظهر لأصحابك</small></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0;color:#dce8fa;font-size:12px;direction:ltr"><b>PLAYER ID · ${esc(S.playerId)}</b><button class="sec" style="padding:6px 9px" onclick="copyPlayerId()">نسخ المعرف</button></div>
+      <div class="section-heading avatar-heading"><span class="step">02</span><div><h3>اختار شخصيتك</h3><small>دي هويتك وسط صحابك</small></div></div>
       <div class="avatar-pick">${CH.map((c,i)=>`<button class="${S.ch==i?'on':''}" aria-label="${c[1]}" onclick="S.ch=${i};persist();startScreen()">${c[0]}</button>`).join('')}</div>
-      <p style="font-size:11px;color:#b9c9df;margin:8px 0 0">تسجيل Google وربط الملف بحساب دائم: لم يُفعّل بعد.</p></section>
-    <section class="game-section"><div class="section-heading"><span class="step">03</span><div><h3>هتلعب إزاي؟</h3><small>اختار طريقة اللعب</small></div></div>
-      <div class="g3 game-grid"><button class="opt game-opt on" onclick="choosePlayMode('ai')"><b>🤖</b><strong>ضد الكمبيوتر</strong><small>متاح الآن</small></button><button class="opt game-opt off" onclick="choosePlayMode('friend')"><b>👥</b><strong>مع صديق</strong><small>قيد التجهيز</small></button><button class="opt game-opt off" onclick="choosePlayMode('random')"><b>🌐</b><strong>أونلاين عشوائي</strong><small>قيد التجهيز</small></button></div></section>
-    <section class="game-section"><div class="section-heading"><span class="step">04</span><div><h3>اختار لعبتك</h3><small>الألعاب المتاحة حاليًا</small></div></div><div class="g3 game-grid">${GM.map((g,i)=>`<button class="opt game-opt ${g[2]?(S.game==i?'on':''):'off'}" ${g[2]?`onclick="S.game=${i};persist();startScreen()"`:''}><b>${gameIcon(g[1])}</b><strong>${g[0]}</strong>${g[2]?'':'<small>قريبًا</small>'}</button>`).join('')}</div></section>
-    <section class="difficulty-section"><div class="section-heading"><span class="step">05</span><div><h3>مستوى الكمبيوتر</h3><small>اختار منافسك</small></div></div><div class="g4 difficulty-grid">${DF.map((d,i)=>`<button class="opt difficulty-opt ${S.df==i?'on':''}" onclick="S.df=${i};persist();startScreen()"><b>${d[2]}</b><strong>${d[0]}</strong><small>${d[1]}</small></button>`).join('')}</div></section>
-    <div class="home-actions"><button class="pri home-play" onclick="go()">يلا نبدأ اللعب <span>←</span></button></div></div>${S.set?setSheet():''}`;const _n=document.querySelector('.start');if(_n)_n.scrollTop=_y;
+    </section><div class="home-actions"><button class="pri home-play" onclick="S.profileStep=2;persist();startScreen()">التالي <span>←</span></button></div>`:
+    `<section class="game-section"><div class="section-heading"><span class="step">01</span><div><h3>هتلعب مع مين؟</h3><small>اختار نوع القعدة</small></div></div>
+      <div class="g3 game-grid"><button class="opt game-opt ${S.mode==='ai'?'on':''}" onclick="S.mode='ai';persist();startScreen()"><b>🤖</b><strong>ضد الكمبيوتر</strong><small>متاح الآن</small></button><button class="opt game-opt ${S.mode==='friend'?'on':''}" onclick="S.mode='friend';persist();startScreen()"><b>👥</b><strong>مع صديق</strong><small>قريبًا</small></button><button class="opt game-opt ${S.mode==='random'?'on':''}" onclick="S.mode='random';persist();startScreen()"><b>🌐</b><strong>لعب عشوائي</strong><small>قريبًا</small></button></div></section>
+      <section class="game-section"><div class="section-heading"><span class="step">02</span><div><h3>اختار اللعبة</h3><small>حدد اللعبة اللي نفسك فيها</small></div></div><div class="g3 game-grid">${GM.map((g,i)=>`<button class="opt game-opt ${g[2]?(S.game==i?'on':''):'off'}" ${g[2]?`onclick="S.game=${i};persist();startScreen()"`:''}><b>${gameIcon(g[1])}</b><strong>${g[0]}</strong>${g[2]?'':'<small>قريبًا</small>'}</button>`).join('')}</div></section>
+      ${S.mode==='ai'?`<section class="difficulty-section"><div class="section-heading"><span class="step">03</span><div><h3>مستوى الكمبيوتر</h3><small>اختار درجة التحدي</small></div></div><div class="g4 difficulty-grid">${DF.map((d,i)=>`<button class="opt difficulty-opt ${S.df==i?'on':''}" onclick="S.df=${i};persist();startScreen()"><b>${d[2]}</b><strong>${d[0]}</strong><small>${d[1]}</small></button>`).join('')}</div></section>`:''}
+      <div class="home-actions"><button class="sec" onclick="S.profileStep=1;persist();startScreen()">رجوع</button><button class="pri home-play" onclick="S.mode==='ai'?go():showToast('الخيار ده هيتفعل مع تحديث اللعب أونلاين')">ابدأ اللعب <span>←</span></button></div>`}
+    </div>${S.set?setSheet():''}`;
 }
