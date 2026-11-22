@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "572837784692",
+    "project_id": "qahwet-el-hetta",
+    "storage_bucket": "qahwet-el-hetta.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:572837784692:android:2ba62f673af102ed79f521",
+        "android_client_info": {
+          "package_name": "com.filexawy.qahwelhetta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUmw1It8TxURmAv0yAZqW33yW0sM2fQ7U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
