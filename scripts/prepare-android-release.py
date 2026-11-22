@@ -13,18 +13,18 @@ app_text = app_gradle.read_text()
 
 plugin_line = "        classpath 'com.google.gms:google-services:4.4.2'"
 if "com.google.gms:google-services" not in root_text:
-    match = re.search(r"(dependencies\\s*\\{)", root_text)
+    match = re.search(r"(dependencies\s*\{)", root_text)
     if not match:
         raise SystemExit("Could not locate root Gradle buildscript dependencies block.")
     pos = match.end()
-    root_text = root_text[:pos] + "\\n" + plugin_line + root_text[pos:]
+    root_text = root_text[:pos] + "\n" + plugin_line + root_text[pos:]
 
 apply_line = "apply plugin: 'com.google.gms.google-services'"
 if "com.google.gms.google-services" not in app_text:
-    app_text = app_text.rstrip() + "\\n\\n" + apply_line + "\\n"
+    app_text = app_text.rstrip() + "\n\n" + apply_line + "\n"
 
 if "signingConfigs" not in app_text:
-    build_types = re.search(r"(?m)^\\s*buildTypes\\s*\\{", app_text)
+    build_types = re.search(r"(?m)^\s*buildTypes\s*\{", app_text)
     if not build_types:
         raise SystemExit("Could not locate app Gradle buildTypes block.")
     signing = """    signingConfigs {
@@ -39,12 +39,12 @@ if "signingConfigs" not in app_text:
 """
     app_text = app_text[:build_types.start()] + signing + app_text[build_types.start():]
 
-release_block = re.search(r"(?s)release\\s*\\{.*?\\n\\s*\\}", app_text)
+release_block = re.search(r"(?s)release\s*\{.*?\n\s*\}", app_text)
 if not release_block:
     raise SystemExit("Could not locate release buildType block.")
 block = release_block.group(0)
 if "signingConfig" not in block:
-    block_new = block[:-1] + "        signingConfig signingConfigs.release\\n    }"
+    block_new = block[:-1] + "        signingConfig signingConfigs.release\n    }"
     app_text = app_text[:release_block.start()] + block_new + app_text[release_block.end():]
 
 root_gradle.write_text(root_text)
