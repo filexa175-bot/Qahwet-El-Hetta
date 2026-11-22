@@ -50,7 +50,7 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
-
+          unzip -o -q ../android-icons.zip -d android/app/src/main/res/
       - name: Build APK
         working-directory: app-source/android
         run: |
