@@ -20,6 +20,11 @@ const db=getFirestore(app);
 const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function makeId(){let out="";for(let i=0;i<8;i++)out+=alphabet[Math.floor(Math.random()*alphabet.length)];return out;}
 function cleanName(v){return String(v||"").trim().replace(/[<>]/g,"").slice(0,18);}
+function errorText(e){
+  const code=e?.code?String(e.code)+" — ":"";
+  const msg=String(e?.message||"خطأ غير معروف").replace(/^Firebase:s*/,"");
+  return (code+msg).slice(0,220);
+}
 async function reservePlayerId(uid){
   for(let attempt=0;attempt<8;attempt++){
     const id=makeId();
@@ -53,17 +58,19 @@ async function saveProfile(user){
 async function signIn(){
   try{
     window.showToast?.("جاري فتح تسجيل Google...");
-    const result=await FirebaseAuthentication.signInWithGoogle();
-    if(!result.credential?.idToken)throw new Error("لم نستلم رمز Google");
-    const credential=GoogleAuthProvider.credential(result.credential.idToken);
+    // Native Google picker returns a credential; Firebase JS SDK then owns the session used by Firestore.
+    const result=await FirebaseAuthentication.signInWithGoogle({skipNativeAuth:true});
+    const idToken=result?.credential?.idToken;
+    if(!idToken)throw new Error("Google رجّع اختيار الحساب بدون رمز الدخول. حاول مرة أخرى.");
+    const credential=GoogleAuthProvider.credential(idToken);
     const signed=await signInWithCredential(auth,credential);
     const profile=await saveProfile(signed.user);
     window.QHApplyProfile?.(profile,signed.user);
-    window.showToast?.("أهلاً بيك في قهوة الحتة ☕");
+    window.showToast?.("تم ربط حسابك بنجاح ☕");
     return profile;
   }catch(e){
     console.error("QH sign in",e);
-    window.showToast?.("تعذر تسجيل الدخول: "+(e.message||"حاول مرة أخرى"));
+    window.showToast?.("فشل ربط الحساب: "+errorText(e));
     throw e;
   }
 }
@@ -82,8 +89,8 @@ async function signOut(){
 }
 async function restore(){
   const user=auth.currentUser;
-  if(user){try{await saveProfile(user);}catch(e){console.warn(e);}}
+  if(user){try{await saveProfile(user);}catch(e){console.warn("QH restore/profile",e);window.showToast?.("تعذر تحميل ملف اللاعب: "+errorText(e));}}
 }
 window.QHAuth={signIn,updateProfile,signOut,restore,get currentUser(){return auth.currentUser;},get db(){return db;}};
-onAuthStateChanged(auth,user=>{if(user)restore().catch(console.warn);});
+onAuthStateChanged(auth,user=>{if(user)restore().catch(e=>console.warn("QH auth state",e));});
 window.addEventListener("DOMContentLoaded",()=>setTimeout(restore,300));
