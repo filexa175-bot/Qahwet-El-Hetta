@@ -20,7 +20,6 @@ cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
 bridge = """<script>
 window.QHApplyProfile = (p) => {
   try {
-    if (!window.S) return;
     S.playerName = p.displayName || S.playerName;
     S.playerId = p.playerId || S.playerId;
     S.ch = Number.isInteger(p.avatarIndex) ? p.avatarIndex : S.ch;
@@ -46,7 +45,7 @@ for rel in ("www/index.html", "www/game.html"):
     # Remove an earlier copy of our bridge/script before adding one clean copy.
     import re
     html = re.sub(
-        r'<script>\\s*window\\.QHApplyProfile[\\s\\S]*?</script>\\s*<script src="firebase-auth\\.js"></script>',
+        r'<script>\s*window\.QHApplyProfile[\s\S]*?</script>\s*<script src="firebase-auth\.js"></script>',
         "",
         html
     )
