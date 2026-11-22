@@ -28,7 +28,7 @@ for path in files:
     if "PLAYER ID ·" not in src:
         start = src.index("function startScreen(){")
         end = src.index("\nfunction go(){", start)
-        replacement = Path("scripts/player-home-screen.html.txt").read_text(encoding="utf-8")
+        replacement = Path("../scripts/player-home-screen.html.txt").read_text(encoding="utf-8")
         src = src[:start] + replacement.rstrip() + src[end:]
     path.write_text(src, encoding="utf-8")
 print("Player profile patch applied to both HTML entry files.")
