@@ -128,7 +128,18 @@ jobs:
           set -euo pipefail
           for APK in app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/release/app-release.apk; do
             test -s "$APK"
-            ENTRY=$(unzip -Z1 "$APK" | grep -E '(^|/)firebase-auth\\.js
+            ENTRY=$(unzip -Z1 "$APK" | grep -F 'firebase-auth.js' | head -n 1 || true)
+            if [ -z "$ENTRY" ]; then
+              echo "firebase-auth.js was not found inside $APK"
+              exit 1
+            fi
+            if ! unzip -p "$APK" "$ENTRY" | grep -Fq 'QH-DIAG-20261123-A'; then
+              echo "Diagnostic marker is missing from $APK ($ENTRY)"
+              exit 1
+            fi
+            echo "Verified QH-DIAG-20261123-A inside $APK at $ENTRY"
+          done
+
       - name: Upload debug APK (backup)
         uses: actions/upload-artifact@v4
         with:
