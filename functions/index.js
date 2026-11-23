@@ -66,8 +66,24 @@ exports.claimDailyGift = onCall(async (request) => {
 
 exports.getWallet = onCall(async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "سجل دخولك أولاً");
-  const snap = await db.doc(`wallets/${request.auth.uid}`).get();
-  if (!snap.exists) throw new HttpsError("failed-precondition", "محفظة اللاعب غير مهيأة");
-  const data = snap.data();
+  const uid = request.auth.uid;
+  const walletRef = db.doc(`wallets/${uid}`);
+  // Also initialize accounts created before wallet functions were introduced.
+  const data = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(walletRef);
+    if (snap.exists) return snap.data();
+    const initial = {
+      uid, balance: 500, totalEarned: 500,
+      registrationGiftClaimed: true, lastDailyGiftDay: null,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
+    };
+    tx.create(walletRef, initial);
+    tx.create(walletRef.collection("ledger").doc("registration-gift"), {
+      type: "registration_gift", amount: 500,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    return initial;
+  });
   return { balance: Number(data.balance || 0), lastDailyGiftDay: data.lastDailyGiftDay || null, today: cairoDay() };
 });
