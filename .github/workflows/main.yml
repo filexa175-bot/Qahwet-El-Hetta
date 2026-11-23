@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - feature/accounts-online-multiplayer
+      - fix/free-firestore-wallet
 
 permissions:
   contents: read
