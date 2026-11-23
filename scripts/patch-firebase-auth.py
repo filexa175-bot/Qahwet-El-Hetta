@@ -18,6 +18,23 @@ cfg.setdefault("plugins", {})["FirebaseAuthentication"] = {
 cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
 
 bridge = """<script>
+window.QHRenderWalletBubble = () => {
+  if (!window.S?.authenticated) return;
+  let root = document.getElementById("qh-wallet-bubble-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "qh-wallet-bubble-root";
+    root.style.cssText = "position:fixed;z-index:180000;top:calc(10px + env(safe-area-inset-top));left:12px;direction:rtl;font-family:system-ui;max-width:calc(100vw - 24px)";
+    root.innerHTML = '<button id="qh-wallet-bubble" type="button" aria-label="المحفظة" style="display:flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #d8b36d;border-radius:24px;background:linear-gradient(135deg,#3b2418,#171c19);color:#ffe5ad;box-shadow:0 5px 18px #0008;font-weight:900;font-size:13px"><span style="display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:linear-gradient(135deg,#f3d28e,#a66b32);color:#382315;font-size:16px">☕</span><span><small style="display:block;font-size:9px;opacity:.8">رصيدك</small><b id="qh-wallet-bubble-balance">...</b> <small>عملة</small></span><span id="qh-wallet-bubble-arrow">⌄</span></button><div id="qh-wallet-bubble-panel" hidden style="margin-top:7px;padding:12px;border:1px solid #c99b58;border-radius:15px;background:rgba(24,30,26,.98);color:#ffebc7;box-shadow:0 8px 24px #0009;min-width:190px"><div style="font-weight:900;margin-bottom:8px">☕ محفظة قهوة الحتة</div><div style="font-size:22px;font-weight:900;margin-bottom:10px"><span id="qh-wallet-bubble-balance-large">...</span> عملة</div><button id="qh-wallet-bubble-gift" type="button" style="width:100%;border:1px solid #d7b16b;border-radius:10px;padding:9px;background:#6b4729;color:#fff0cf;font-weight:800" onclick="window.QHAuth?.claimDailyGift()">استلام الهدية اليومية · 500</button></div>';
+    document.body.appendChild(root);
+    document.getElementById("qh-wallet-bubble").addEventListener("click", () => {
+      const panel = document.getElementById("qh-wallet-bubble-panel");
+      const arrow = document.getElementById("qh-wallet-bubble-arrow");
+      panel.hidden = !panel.hidden;
+      arrow.textContent = panel.hidden ? "⌄" : "⌃";
+    });
+  }
+};
 window.QHApplyProfile = (p) => {
   try {
     S.playerName = p.displayName || S.playerName;
@@ -27,6 +44,7 @@ window.QHApplyProfile = (p) => {
     S.profileStep = 1;
     persist();
     if (typeof startScreen === "function") startScreen();
+    window.QHRenderWalletBubble?.();
     // Clear the persistent sign-in progress/diagnostic banner on success.
     const diagnostic = document.getElementById("qh-auth-diagnostic");
     if (diagnostic) diagnostic.remove();
