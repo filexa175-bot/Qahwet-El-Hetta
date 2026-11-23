@@ -87,7 +87,7 @@ jobs:
           python3 ../scripts/patch-firebase-auth-diagnostic.py
           npx esbuild ./firebase-auth-entry.js --bundle --platform=browser --format=iife --outfile=www/firebase-auth.js
           echo "=== VERIFY FIREBASE DIAGNOSTIC BUNDLE ==="
-          grep -Fq 'QH-DIAG-20261123-A' www/firebase-auth.js
+          grep -Fq 'QH-DIAG-20261123-C' www/firebase-auth.js
           grep -Fq 'project=' www/firebase-auth.js
           echo "Diagnostic marker confirmed in bundled web asset."
 
@@ -133,11 +133,11 @@ jobs:
               echo "firebase-auth.js was not found inside $APK"
               exit 1
             fi
-            if ! unzip -p "$APK" "$ENTRY" | grep -Fq 'QH-DIAG-20261123-A'; then
+            if ! unzip -p "$APK" "$ENTRY" | grep -Fq 'QH-DIAG-20261123-C'; then
               echo "Diagnostic marker is missing from $APK ($ENTRY)"
               exit 1
             fi
-            echo "Verified QH-DIAG-20261123-A inside $APK at $ENTRY"
+            echo "Verified QH-DIAG-20261123-C inside $APK at $ENTRY"
           done
 
       - name: Upload debug APK (backup)
