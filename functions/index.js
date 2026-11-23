@@ -63,3 +63,11 @@ exports.claimDailyGift = onCall(async (request) => {
     return { claimed: true, balance, day: today };
   });
 });
+
+exports.getWallet = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "سجل دخولك أولاً");
+  const snap = await db.doc(`wallets/${request.auth.uid}`).get();
+  if (!snap.exists) throw new HttpsError("failed-precondition", "محفظة اللاعب غير مهيأة");
+  const data = snap.data();
+  return { balance: Number(data.balance || 0), lastDailyGiftDay: data.lastDailyGiftDay || null };
+});
