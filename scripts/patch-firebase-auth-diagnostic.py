@@ -1,6 +1,6 @@
 from pathlib import Path
 
-path = Path("app-source/firebase-auth-entry.js")
+path = Path("firebase-auth-entry.js")
 if not path.exists():
     raise SystemExit("firebase-auth-entry.js was not copied into app-source")
 
