@@ -3,11 +3,14 @@ from pathlib import Path
 files = [Path("www/index.html"), Path("www/game.html")]
 home = Path("../scripts/player-home-screen.html.txt").read_text(encoding="utf-8").rstrip()
 # Keep the wallet in sync whenever the profile screen is rebuilt (Next/Back).
-home = home.replace(
-    "    </div>\u0024{S.set?setSheet():''}`\n}",
-    "    </div>\u0024{S.set?setSheet():''}`\n    if (S.authenticated) setTimeout(() => window.QHAuth?.loadWallet(), 0);\n}",
-    1
-)
+# Inject the wallet refresh before startScreen() closes. Fail the build if the
+# expected template ending changes, rather than silently shipping an unpatched APK.
+wallet_refresh = "    if (S.authenticated) setTimeout(() => window.QHAuth?.loadWallet(), 0);"
+if home.count("\n}") != 1:
+    raise SystemExit("Cannot uniquely locate the end of startScreen() template")
+home = home.rsplit("\n}", 1)[0] + "\n" + wallet_refresh + "\n}\n"
+if wallet_refresh not in home:
+    raise SystemExit("Wallet refresh hook was not inserted")
 
 for path in files:
     src = path.read_text(encoding="utf-8")
