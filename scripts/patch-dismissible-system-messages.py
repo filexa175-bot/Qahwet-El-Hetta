@@ -4,7 +4,7 @@ targets = [Path("www/index.html"), Path("www/game.html")]
 css = """
 <style id="qh-dismissible-system-ui">
 .top .bub{position:relative;padding-right:34px}
-        '${esc(G.msg)}<button class="qh-bubble-close" type="button" aria-label="إغلاق" onclick="qhDismissOpponentMessage()">×</button>',
+        '''${esc(G.msg)}<button class="qh-bubble-close" type="button" aria-label="إغلاق" onclick="qhDismissOpponentMessage()">×</button>''',
 #qh-system-notice{position:fixed;inset:0;z-index:200000;display:none;align-items:center;justify-content:center;padding:22px;background:#0009}
 #qh-system-notice.show{display:flex}
 #qh-system-notice .qh-notice-card{position:relative;width:min(420px,100%);padding:24px 20px 20px;border:2px solid #b88a4d;border-radius:18px;background:linear-gradient(145deg,#29473e,#142a25);color:#fff0d1;box-shadow:0 16px 50px #0009;text-align:center;font:600 16px/1.7 system-ui}
