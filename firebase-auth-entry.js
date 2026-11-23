@@ -103,8 +103,8 @@ async function signIn(){
     const signed=await signInWithCredential(auth,credential);
     stage="حفظ ملف اللاعب ومعرّفه في Firestore";
     const profile=await saveProfile(signed.user);
-    window.QHApplyProfile?.(profile,signed.user);
-    authNotice("تم ربط حسابك وحفظ ملفك بنجاح ☕");
+    // saveProfile applies the profile and shows the single temporary success toast.
+    // Keep the persistent diagnostic notice for errors only.
     return profile;
   }catch(e){
     const message="تعذر "+stage+": "+errorText(e);
