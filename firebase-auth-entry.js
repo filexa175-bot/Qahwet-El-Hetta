@@ -22,8 +22,22 @@ function makeId(){let out="";for(let i=0;i<8;i++)out+=alphabet[Math.floor(Math.r
 function cleanName(v){return String(v||"").trim().replace(/[<>]/g,"").slice(0,18);}
 function errorText(e){
   const code=e?.code?String(e.code)+" — ":"";
-  const msg=String(e?.message||"خطأ غير معروف").replace(/^Firebase:s*/,"");
-  return (code+msg).slice(0,220);
+  const msg=String(e?.message||"خطأ غير معروف").replace(/^Firebase:\\s*/,"");
+  return (code+msg).slice(0,260);
+}
+function authNotice(message){
+  console.error("[QH AUTH]",message);
+  try {
+    let el=document.getElementById("qh-auth-diagnostic");
+    if(!el){
+      el=document.createElement("div");
+      el.id="qh-auth-diagnostic";
+      Object.assign(el.style,{position:"fixed",zIndex:"2147483647",left:"12px",right:"12px",bottom:"18px",padding:"14px 16px",borderRadius:"12px",background:"#172c29",color:"#fff",font:"bold 14px/1.6 sans-serif",direction:"rtl",textAlign:"right",boxShadow:"0 4px 24px #0008"});
+      document.body.appendChild(el);
+    }
+    el.textContent=message;
+    el.style.display="block";
+  } catch (_) {}
 }
 async function reservePlayerId(uid){
   for(let attempt=0;attempt<8;attempt++){
@@ -56,22 +70,28 @@ async function saveProfile(user){
   return p;
 }
 async function signIn(){
+  let stage="فتح نافذة اختيار حساب Google";
+  authNotice("جاري فتح تسجيل Google...");
   try{
-    window.showToast?.("جاري فتح تسجيل Google...");
-    // Native Google picker returns a credential; Firebase JS SDK then owns the session used by Firestore.
-    const result=await FirebaseAuthentication.signInWithGoogle({skipNativeAuth:true});
+    const result=await FirebaseAuthentication.signInWithGoogle();
     const idToken=result?.credential?.idToken;
-    if(!idToken)throw new Error("Google رجّع اختيار الحساب بدون رمز الدخول. حاول مرة أخرى.");
-    const credential=GoogleAuthProvider.credential(idToken);
+    const accessToken=result?.credential?.accessToken;
+    if(!idToken && !accessToken){
+      const keys=result?.credential?Object.keys(result.credential).join(", "):"لا يوجد credential";
+      throw new Error("اختيار الحساب انتهى لكن لم يصل رمز Google. بيانات credential: "+keys);
+    }
+    stage="التحقق من الحساب لدى Firebase";
+    const credential=GoogleAuthProvider.credential(idToken||null,accessToken||null);
     const signed=await signInWithCredential(auth,credential);
+    stage="حفظ ملف اللاعب ومعرّفه في Firestore";
     const profile=await saveProfile(signed.user);
     window.QHApplyProfile?.(profile,signed.user);
-    window.showToast?.("تم ربط حسابك بنجاح ☕");
+    authNotice("تم ربط حسابك وحفظ ملفك بنجاح ☕");
     return profile;
   }catch(e){
-    console.error("QH sign in",e);
-    window.showToast?.("فشل ربط الحساب: "+errorText(e));
-    throw e;
+    const message="تعذر "+stage+": "+errorText(e);
+    authNotice(message);
+    return null;
   }
 }
 async function updateProfile(displayName,avatarIndex){
@@ -92,5 +112,7 @@ async function restore(){
   if(user){try{await saveProfile(user);}catch(e){console.warn("QH restore/profile",e);window.showToast?.("تعذر تحميل ملف اللاعب: "+errorText(e));}}
 }
 window.QHAuth={signIn,updateProfile,signOut,restore,get currentUser(){return auth.currentUser;},get db(){return db;}};
+window.QHAuthReady=true;
+console.info("[QH AUTH] Firebase auth bundle initialized; native="+Capacitor.isNativePlatform());
 onAuthStateChanged(auth,user=>{if(user)restore().catch(e=>console.warn("QH auth state",e));});
 window.addEventListener("DOMContentLoaded",()=>setTimeout(restore,300));
