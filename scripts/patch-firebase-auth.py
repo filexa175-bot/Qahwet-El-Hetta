@@ -27,7 +27,28 @@ window.QHApplyProfile = (p) => {
     S.profileStep = 1;
     persist();
     if (typeof startScreen === "function") startScreen();
+    if (typeof window.QHShowToast === "function") window.QHShowToast("تم ربط حسابك وحفظ ملفك بنجاح ☕");
   } catch (e) { console.error("QH profile bridge", e); }
+};
+window.QHShowToast = (message) => {
+  try {
+    let toast = document.getElementById("qh-auth-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "qh-auth-toast";
+      toast.style.cssText = "position:fixed;z-index:200000;left:16px;right:16px;bottom:calc(22px + env(safe-area-inset-bottom));padding:15px 18px;border:1px solid #2ec9d5;border-radius:16px;background:rgba(15,37,43,.97);color:#a5f3f5;text-align:center;font:800 14px system-ui;box-shadow:0 12px 35px #0008;opacity:0;transform:translateY(12px);transition:opacity .22s ease,transform .22s ease;pointer-events:none";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+    clearTimeout(window.__qhToastTimer);
+    window.__qhToastTimer = setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(12px)";
+      setTimeout(() => toast.remove(), 260);
+    }, 2600);
+  } catch (e) { console.warn("QH toast", e); }
 };
 window.QHApplySignedOut = () => {
   try {
