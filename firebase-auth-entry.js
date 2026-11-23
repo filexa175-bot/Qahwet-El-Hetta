@@ -212,6 +212,8 @@ function writeWalletCache(uid,data){
 function paintWallet(data){
   if(!data)return;
   currentWalletData=data;
+  window.__QHWalletBubbleEnabled = true;
+  window.QHRenderWalletBubble?.();
   const balanceEl=document.getElementById("qh-wallet-balance");
   const noteEl=document.getElementById("qh-wallet-note");
   const giftBtn=document.getElementById("qh-daily-gift");
