@@ -126,7 +126,7 @@ jobs:
         working-directory: app-source/android
         run: |
           set -euo pipefail
-          EXPECTED_SHA1=$(python3 -c "import json; d=json.load(open('../../../google-services.json')); c=d['client'][0]['oauth_client']; print(next(x['android_info']['certificate_hash'] for x in c if x.get('client_type') == 1).replace(':','').upper())")
+          EXPECTED_SHA1=$(python3 -c "import json; d=json.load(open('../../google-services.json')); c=d['client'][0]['oauth_client']; print(next(x['android_info']['certificate_hash'] for x in c if x.get('client_type') == 1).replace(':','').upper())")
           ACTUAL_SHA1=$(keytool -printcert -jarfile app/build/outputs/apk/release/app-release.apk | awk '/SHA1:/{gsub(/:/,\"\",$2); print toupper($2); exit}')
           echo "Firebase Android OAuth SHA-1: $EXPECTED_SHA1"
           echo "Release APK signing SHA-1:    $ACTUAL_SHA1"
