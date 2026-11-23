@@ -23,7 +23,7 @@ function cleanName(v){return String(v||"").trim().replace(/[<>]/g,"").slice(0,18
 function errorText(e){
   const code=e?.code?String(e.code)+" — ":"";
   const msg=String(e?.message||"خطأ غير معروف").replace(/^Firebase:\\s*/,"");
-  return (code+msg).slice(0,260);
+  return (code+msg).slice(0,1000);
 }
 function authNotice(message){
   console.error("[QH AUTH]",message);
