@@ -16,6 +16,11 @@ for path in files:
     src = path.read_text(encoding="utf-8")
 
     # Extend the existing local profile without disturbing game counters.
+    if "stake:50" not in src:
+        if "mode:'ai',domScore:" not in src:
+            raise SystemExit(f"Cannot locate game settings for stake default in {path}")
+        src = src.replace("mode:'ai',domScore:", "mode:'ai',stake:50,domScore:", 1)
+
     if "profileStep:1" not in src:
         needle = "const S={game:0,ch:0,df:1,playerName:'',"
         if src.count(needle) != 1:
@@ -23,14 +28,14 @@ for path in files:
         src = src.replace(needle, "const S={game:0,ch:0,df:1,playerName:'',playerId:'',profileStep:1,mode:'ai',", 1)
 
     saved_needle = "if(SAVED.settings)Object.assign(S,{game:SAVED.settings.game??0,ch:SAVED.settings.ch??0,df:SAVED.settings.df??1,playerName:SAVED.settings.playerName??''});"
-    saved_replacement = "if(SAVED.settings)Object.assign(S,{game:SAVED.settings.game??0,ch:SAVED.settings.ch??0,df:SAVED.settings.df??1,playerName:SAVED.settings.playerName??'',playerId:SAVED.settings.playerId??'',profileStep:SAVED.settings.profileStep??1,mode:SAVED.settings.mode??'ai'});"
+    saved_replacement = "if(SAVED.settings)Object.assign(S,{game:SAVED.settings.game??0,ch:SAVED.settings.ch??0,df:SAVED.settings.df??1,playerName:SAVED.settings.playerName??'',playerId:SAVED.settings.playerId??'',profileStep:SAVED.settings.profileStep??1,mode:SAVED.settings.mode??'ai',stake:SAVED.settings.stake??50});"
     if saved_needle in src:
         src = src.replace(saved_needle, saved_replacement, 1)
     elif "SAVED.settings.playerId" not in src:
         raise SystemExit(f"Cannot locate saved settings in {path}")
 
     persist_needle = "function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify({settings:{game:S.game,ch:S.ch,df:S.df,playerName:S.playerName}}))}catch(e){}}"
-    persist_replacement = "function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify({settings:{game:S.game,ch:S.ch,df:S.df,playerName:S.playerName,playerId:S.playerId,profileStep:S.profileStep,mode:S.mode}}))}catch(e){}}"
+    persist_replacement = "function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify({settings:{game:S.game,ch:S.ch,df:S.df,playerName:S.playerName,playerId:S.playerId,profileStep:S.profileStep,mode:S.mode,stake:S.stake||50}}))}catch(e){}}"
     if persist_needle in src:
         src = src.replace(persist_needle, persist_replacement, 1)
     elif "profileStep:S.profileStep" not in src:
@@ -51,6 +56,11 @@ for path in files:
 '''
         src = src[:gt] + boot + src[gt:]
 
+    if "qh-stake-grid" not in src:
+        style_marker = "</style>"
+        if style_marker not in src:
+            raise SystemExit(f"No style close in {path}")
+        src = src.replace(style_marker, "\n.qh-stake-section{padding:8px 10px!important;margin:6px 0!important}\n.qh-stake-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}\n.qh-stake-opt{min-height:42px!important;padding:5px 2px!important;border:1px solid #3b5c87!important;border-radius:10px!important;background:linear-gradient(145deg,#172b4b,#101b33)!important;color:#f1f6ff!important}\n.qh-stake-opt b{font-size:15px!important;line-height:1.1}\n.qh-stake-opt small{font-size:9px!important}\n.qh-stake-opt.on{border-color:#35d7ed!important;background:linear-gradient(145deg,#145071,#172a4b)!important}\n.qh-stake-summary{font-size:11px;color:#b8cbe4;margin-top:6px}\n.qh-stake-summary b{color:#8deaff}\n" + style_marker, 1)
     path.write_text(src, encoding="utf-8")
 
 print("Two-step home screen and branded startup screen applied.")
