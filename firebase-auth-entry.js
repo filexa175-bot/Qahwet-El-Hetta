@@ -71,7 +71,17 @@ async function verifyFirestoreSession(user){
     throw mismatch;
   }
   lastAuthUserMatch = "yes";
-  await active.getIdToken(true);
+  // Inspect only non-secret ID-token claims; never expose the token itself.
+  const tokenInfo = await active.getIdTokenResult(true);
+  const claims = tokenInfo?.claims || {};
+  const firebaseClaims = claims.firebase || {};
+  window.__QH_FIREBASE_TOKEN_AUDIT = {
+    aud: String(claims.aud || "missing"),
+    iss: String(claims.iss || "missing"),
+    subMatches: claims.sub === user.uid,
+    provider: String(firebaseClaims.sign_in_provider || "missing"),
+    authTimePresent: Boolean(claims.auth_time)
+  };
   return active;
 }
 async function saveProfile(user){
@@ -90,9 +100,16 @@ async function saveProfile(user){
         const sameUid=activeUid===uid;
         lastAuthUserMatch = sameUid ? "yes" : "no";
         const project=app.options.projectId||"unknown";
+        const audit=window.__QH_FIREBASE_TOKEN_AUDIT||{};
         const denied=new Error("Firestore get users/{uid} denied; project="+project+
+          "; path=users/{current-user}"+
           "; auth-user-matches-requested-user="+sameUid+
           "; firebase-session="+(activeUid==="none"?"missing":"present")+
+          "; token-aud="+String(audit.aud||"missing")+
+          "; token-iss="+String(audit.iss||"missing")+
+          "; token-sub-match="+String(Boolean(audit.subMatches))+
+          "; sign-in-provider="+String(audit.provider||"missing")+
+          "; auth-time-present="+String(Boolean(audit.authTimePresent))+
           "; cause="+errorText(readError));
         denied.authUserMatch=sameUid;
         throw denied;
