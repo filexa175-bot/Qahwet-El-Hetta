@@ -29,17 +29,23 @@ for path in files:
 
     saved_needle = "if(SAVED.settings)Object.assign(S,{game:SAVED.settings.game??0,ch:SAVED.settings.ch??0,df:SAVED.settings.df??1,playerName:SAVED.settings.playerName??''});"
     saved_replacement = "if(SAVED.settings)Object.assign(S,{game:SAVED.settings.game??0,ch:SAVED.settings.ch??0,df:SAVED.settings.df??1,playerName:SAVED.settings.playerName??'',playerId:SAVED.settings.playerId??'',profileStep:SAVED.settings.profileStep??1,mode:SAVED.settings.mode??'ai',stake:SAVED.settings.stake??50});"
-    if saved_needle in src:
-        src = src.replace(saved_needle, saved_replacement, 1)
-    elif "SAVED.settings.playerId" not in src:
-        raise SystemExit(f"Cannot locate saved settings in {path}")
+    if "stake:SAVED.settings.stake" not in src:
+        if saved_needle in src:
+            src = src.replace(saved_needle, saved_replacement, 1)
+        elif "mode:SAVED.settings.mode??'ai'" in src:
+            src = src.replace("mode:SAVED.settings.mode??'ai'", "mode:SAVED.settings.mode??'ai',stake:SAVED.settings.stake??50", 1)
+        else:
+            raise SystemExit(f"Cannot locate saved settings in {path}")
 
     persist_needle = "function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify({settings:{game:S.game,ch:S.ch,df:S.df,playerName:S.playerName}}))}catch(e){}}"
     persist_replacement = "function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify({settings:{game:S.game,ch:S.ch,df:S.df,playerName:S.playerName,playerId:S.playerId,profileStep:S.profileStep,mode:S.mode,stake:S.stake||50}}))}catch(e){}}"
-    if persist_needle in src:
-        src = src.replace(persist_needle, persist_replacement, 1)
-    elif "profileStep:S.profileStep" not in src:
-        raise SystemExit(f"Cannot locate persistence function in {path}")
+    if "stake:S.stake" not in src:
+        if persist_needle in src:
+            src = src.replace(persist_needle, persist_replacement, 1)
+        elif "mode:S.mode}}" in src:
+            src = src.replace("mode:S.mode}}", "mode:S.mode,stake:S.stake||50}}", 1)
+        else:
+            raise SystemExit(f"Cannot locate persistence function in {path}")
 
     start = src.index("function startScreen(){")
     end = src.index("\nfunction go(){", start)
