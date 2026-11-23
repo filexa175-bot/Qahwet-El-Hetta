@@ -13,8 +13,8 @@ if old_style in src:
 
 old_catch = 'const message="تعذر "+stage+": "+errorText(e);'
 new_catch = '''const active=auth.currentUser;
-    const uidMatch=e?.authUserMatch===true?"yes":e?.authUserMatch===false?"no":"unknown";
-    const message="QH-DIAG-20261123-B | تعذر "+stage+
+    const uidMatch=lastAuthUserMatch;
+    const message="QH-DIAG-20261123-C | تعذر "+stage+
       " | project="+(app.options.projectId||"unknown")+
       " | js-session="+(active?"present":"missing")+
       " | auth-user-match="+uidMatch+
@@ -26,7 +26,7 @@ src = src.replace(old_catch, new_catch, 1)
 marker = 'console.info("[QH AUTH] Firebase auth bundle initialized; native="+Capacitor.isNativePlatform());'
 if marker not in src:
     raise SystemExit("Firebase initialization marker was not found")
-src = src.replace(marker, marker + '\nconsole.info("[QH AUTH] diagnostic build QH-DIAG-20261123-A");', 1)
+src = src.replace(marker, marker + '\nconsole.info("[QH AUTH] diagnostic build QH-DIAG-20261123-C");', 1)
 
 path.write_text(src, encoding="utf-8")
 print("Patched Firebase auth diagnostics in the exact source copied into the Android bundle.")
