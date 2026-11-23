@@ -300,7 +300,8 @@ async function respondFriendRequest(requestId,accept){
  return true;
 }
 window.QHFriends={findPlayerById,sendFriendRequest,listFriendRequests,respondFriendRequest};
-\nwindow.QHAuth={signIn,updateProfile,signOut,restore,loadWallet,claimDailyGift,get currentUser(){return auth.currentUser;},get db(){return db;}};
+
+window.QHAuth={signIn,updateProfile,signOut,restore,loadWallet,claimDailyGift,get currentUser(){return auth.currentUser;},get db(){return db;}};
 window.QHAuthReady=true;
 console.info("[QH AUTH] Firebase auth bundle initialized; native="+Capacitor.isNativePlatform());
 onAuthStateChanged(auth,user=>{if(user)restore().catch(e=>console.warn("QH auth state",e));});
