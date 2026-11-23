@@ -19,13 +19,13 @@ cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
 
 bridge = """<script>
 window.QHRenderWalletBubble = () => {
-  if (!window.S?.authenticated) return;
+  if (!window.__QHWalletBubbleEnabled && !window.S?.authenticated && !window.QHAuth?.currentUser) return;
   let root = document.getElementById("qh-wallet-bubble-root");
   if (!root) {
     root = document.createElement("div");
     root.id = "qh-wallet-bubble-root";
-    root.style.cssText = "position:fixed;z-index:180000;top:calc(10px + env(safe-area-inset-top));left:12px;direction:rtl;font-family:system-ui;max-width:calc(100vw - 24px)";
-    root.innerHTML = '<button id="qh-wallet-bubble" type="button" aria-label="المحفظة" style="display:flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #d8b36d;border-radius:24px;background:linear-gradient(135deg,#3b2418,#171c19);color:#ffe5ad;box-shadow:0 5px 18px #0008;font-weight:900;font-size:13px"><span style="display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:linear-gradient(135deg,#f3d28e,#a66b32);color:#382315;font-size:16px">☕</span><span><small style="display:block;font-size:9px;opacity:.8">رصيدك</small><b id="qh-wallet-bubble-balance">...</b> <small>عملة</small></span><span id="qh-wallet-bubble-arrow">⌄</span></button><div id="qh-wallet-bubble-panel" hidden style="margin-top:7px;padding:12px;border:1px solid #c99b58;border-radius:15px;background:rgba(24,30,26,.98);color:#ffebc7;box-shadow:0 8px 24px #0009;min-width:190px"><div style="font-weight:900;margin-bottom:8px">☕ محفظة قهوة الحتة</div><div style="font-size:22px;font-weight:900;margin-bottom:10px"><span id="qh-wallet-bubble-balance-large">...</span> عملة</div><button id="qh-wallet-bubble-gift" type="button" style="width:100%;border:1px solid #d7b16b;border-radius:10px;padding:9px;background:#6b4729;color:#fff0cf;font-weight:800" onclick="window.QHAuth?.claimDailyGift()">استلام الهدية اليومية · 500</button></div>';
+    root.style.cssText = "position:fixed;z-index:2147483000;top:calc(10px + env(safe-area-inset-top));left:10px;direction:rtl;font-family:system-ui;max-width:calc(100vw - 20px);pointer-events:none";
+    root.innerHTML = '<button id="qh-wallet-bubble" type="button" aria-label="رصيدك" style="pointer-events:auto;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #d8c18b;border-radius:24px;background:linear-gradient(145deg,#202a23,#101713);color:#fff0ca;box-shadow:0 5px 18px #0009;font-weight:900;font-size:13px"><span style="display:flex;align-items:center;padding-left:2px"><i style="display:grid;place-items:center;width:19px;height:19px;margin-left:-5px;border:1px solid #ffffffaa;border-radius:50%;background:radial-gradient(circle at 32% 25%,#8be18b,#17843d 65%,#075326);box-shadow:0 1px 3px #0008;color:#eaffea;font-size:8px;font-style:normal">●</i><i style="display:grid;place-items:center;width:19px;height:19px;margin-left:-5px;border:1px solid #ffffffaa;border-radius:50%;background:radial-gradient(circle at 32% 25%,#ff9a9a,#c82e35 65%,#78141c);box-shadow:0 1px 3px #0008;color:#fff0f0;font-size:8px;font-style:normal">●</i><i style="display:grid;place-items:center;width:19px;height:19px;margin-left:-5px;border:1px solid #ffffffaa;border-radius:50%;background:radial-gradient(circle at 32% 25%,#8ecaff,#176ac1 65%,#0b3978);box-shadow:0 1px 3px #0008;color:#eff8ff;font-size:8px;font-style:normal">●</i><i style="display:grid;place-items:center;width:19px;height:19px;border:1px solid #ffffffaa;border-radius:50%;background:radial-gradient(circle at 32% 25%,#8be18b,#17843d 65%,#075326);box-shadow:0 1px 3px #0008;color:#eaffea;font-size:8px;font-style:normal">●</i></span><span style="text-align:right"><small style="display:block;font-size:9px;opacity:.82">ماركاتك</small><b id="qh-wallet-bubble-balance">0</b> <small>ماركة</small></span><span id="qh-wallet-bubble-arrow">⌄</span></button><div id="qh-wallet-bubble-panel" hidden style="pointer-events:auto;margin-top:7px;padding:12px;border:1px solid #c9b27d;border-radius:15px;background:rgba(20,29,23,.98);color:#ffebc7;box-shadow:0 8px 24px #0009;min-width:190px"><div style="font-weight:900;margin-bottom:8px">ماركاتك في قهوة الحتة</div><div style="font-size:22px;font-weight:900;margin-bottom:10px"><span id="qh-wallet-bubble-balance-large">0</span> ماركة</div><div style="display:flex;gap:5px;margin:0 0 10px"><span style="width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#8be18b,#17843d 65%,#075326)"></span><span style="width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#ff9a9a,#c82e35 65%,#78141c)"></span><span style="width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#8ecaff,#176ac1 65%,#0b3978)"></span><span style="width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#8be18b,#17843d 65%,#075326)"></span></div><button id="qh-wallet-bubble-gift" type="button" style="width:100%;border:1px solid #d7c18b;border-radius:10px;padding:9px;background:#435b3f;color:#fff0cf;font-weight:800">استلام الهدية اليومية · 500</button></div>';
     document.body.appendChild(root);
     document.getElementById("qh-wallet-bubble").addEventListener("click", () => {
       const panel = document.getElementById("qh-wallet-bubble-panel");
@@ -33,13 +33,26 @@ window.QHRenderWalletBubble = () => {
       panel.hidden = !panel.hidden;
       arrow.textContent = panel.hidden ? "⌄" : "⌃";
     });
+    document.getElementById("qh-wallet-bubble-gift").addEventListener("click", () => window.QHAuth?.claimDailyGift());
+  } else if (!root.isConnected) {
+    document.body.appendChild(root);
   }
 };
+window.__QHWalletBubbleEnabled = false;
+const qhKeepWalletBubble = new MutationObserver(() => {
+  if (window.__QHWalletBubbleEnabled) {
+    const root = document.getElementById("qh-wallet-bubble-root");
+    if (root && !root.isConnected) document.body.appendChild(root);
+    else if (!root) window.QHRenderWalletBubble?.();
+  }
+});
+qhKeepWalletBubble.observe(document.documentElement, {childList:true,subtree:true});
 window.QHApplyProfile = (p) => {
   try {
     S.playerName = p.displayName || S.playerName;
     S.playerId = p.playerId || S.playerId;
     S.authenticated = true;
+    window.__QHWalletBubbleEnabled = true;
     S.ch = Number.isInteger(p.avatarIndex) ? p.avatarIndex : S.ch;
     S.profileStep = 1;
     persist();
@@ -77,6 +90,8 @@ window.QHApplySignedOut = () => {
     S.playerId = "";
     S.authenticated = false;
     persist();
+    window.__QHWalletBubbleEnabled = false;
+    document.getElementById("qh-wallet-bubble-root")?.remove();
     if (typeof startScreen === "function") startScreen();
   } catch (e) { console.error("QH sign-out bridge", e); }
 };
