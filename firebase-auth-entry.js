@@ -2,7 +2,6 @@ import { Capacitor } from '@capacitor/core';
 import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider, signInWithCredential, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 const firebaseConfig = {
@@ -123,45 +122,84 @@ async function updateProfile(displayName,avatarIndex){
   await setDoc(ref,{displayName:name,avatarIndex:Number(avatarIndex)||0,updatedAt:serverTimestamp()},{merge:true});
   const p=(await getDoc(ref)).data();window.QHApplyProfile?.(p,user);return p;
 }
+const walletRefFor = uid => doc(db,"wallets",uid);
+const walletInitialData = uid => ({
+  uid, balance: 500, totalEarned: 500,
+  registrationGiftClaimed: true,
+  lastDailyGiftAt: null,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
+});
+const DAILY_GIFT_MS = 24 * 60 * 60 * 1000;
+
 async function loadWallet(){
   const balanceEl=document.getElementById("qh-wallet-balance");
   const noteEl=document.getElementById("qh-wallet-note");
   const giftBtn=document.getElementById("qh-daily-gift");
-  if(!auth.currentUser || !balanceEl) return null;
+  const user=auth.currentUser;
+  if(!user || !balanceEl) return null;
   try{
-    const call=httpsCallable(functions,"getWallet");
-    const result=await call({});
-    const wallet=result.data||{};
-    balanceEl.textContent=Number(wallet.balance||0).toLocaleString("en-US")+" عملة";
-    const claimed=wallet.lastDailyGiftDay===wallet.today;
-    if(giftBtn){giftBtn.disabled=claimed;giftBtn.textContent=claimed?"✓ استلمت هدية النهارده":"🎁 استلام الهدية اليومية · 500 عملة";}
-    if(noteEl)noteEl.textContent=claimed?"هدية اليوم اتضافت بالفعل. ارجع بكرة لهدية جديدة.":"رصيدك الافتراضي محفوظ على حسابك.";
-    return wallet;
+    const ref=walletRefFor(user.uid);
+    let walletData;
+    await runTransaction(db,async tx=>{
+      const snap=await tx.get(ref);
+      if(!snap.exists()){
+        tx.set(ref,walletInitialData(user.uid));
+        walletData={balance:500,totalEarned:500,lastDailyGiftAt:null};
+      }else walletData=snap.data();
+    });
+    const last=walletData.lastDailyGiftAt?.toMillis?.() ?? null;
+    const ready=last===null || (Date.now()-last)>=DAILY_GIFT_MS;
+    balanceEl.textContent=Number(walletData.balance||0).toLocaleString("en-US")+" عملة";
+    if(giftBtn){giftBtn.disabled=!ready;giftBtn.textContent=ready?"🎁 استلام الهدية اليومية · 500 عملة":"✓ الهدية اليومية مستلمة";}
+    if(noteEl)noteEl.textContent=ready?"هدية 500 عملة متاحة بعد مرور 24 ساعة على آخر استلام.":"تقدر تستلم هدية جديدة بعد مرور 24 ساعة على آخر استلام.";
+    return walletData;
   }catch(e){
-    if(balanceEl)balanceEl.textContent="المحفظة غير مفعّلة بعد";
+    if(balanceEl)balanceEl.textContent="تعذر تحميل الرصيد";
     if(giftBtn)giftBtn.disabled=true;
-    if(noteEl)noteEl.textContent="سيتم تفعيل المحفظة بعد نشر خدمات اللعبة.";
+    if(noteEl)noteEl.textContent="تعذر الوصول للمحفظة. تحقق من الاتصال وحاول مرة أخرى.";
     console.warn("[QH WALLET] load",e);
     return null;
   }
 }
+
 async function claimDailyGift(){
+  const user=auth.currentUser;
   const giftBtn=document.getElementById("qh-daily-gift");
   const noteEl=document.getElementById("qh-wallet-note");
+  const balanceEl=document.getElementById("qh-wallet-balance");
+  if(!user) { if(noteEl)noteEl.textContent="سجل دخولك الأول."; return null; }
   if(giftBtn){giftBtn.disabled=true;giftBtn.textContent="جارٍ استلام الهدية...";}
   try{
-    const call=httpsCallable(functions,"claimDailyGift");
-    const result=await call({});
-    const data=result.data||{};
-    const balanceEl=document.getElementById("qh-wallet-balance");
-    if(balanceEl)balanceEl.textContent=Number(data.balance||0).toLocaleString("en-US")+" عملة";
-    if(giftBtn){giftBtn.disabled=true;giftBtn.textContent=data.claimed?"✓ استلمت هدية النهارده":"✓ استلمت هدية النهارده";}
-    if(noteEl)noteEl.textContent=data.claimed?"مبروك! اتضاف 500 عملة لرصيدك.":"هدية اليوم اتضافت بالفعل.";
-    window.QHShowToast?.(data.claimed?"🎁 استلمت 500 عملة هدية يومية":"هدية النهارده استلمتها قبل كده");
-    return data;
+    const ref=walletRefFor(user.uid);
+    const result=await runTransaction(db,async tx=>{
+      const snap=await tx.get(ref);
+      if(!snap.exists()){
+        tx.set(ref,walletInitialData(user.uid));
+        return {claimed:false,balance:500,reason:"initialized"};
+      }
+      const wallet=snap.data();
+      const last=wallet.lastDailyGiftAt?.toMillis?.() ?? null;
+      if(last!==null && (Date.now()-last)<DAILY_GIFT_MS){
+        return {claimed:false,balance:Number(wallet.balance||0),reason:"already-claimed"};
+      }
+      const balance=Number(wallet.balance||0)+500;
+      tx.update(ref,{
+        balance,
+        totalEarned:Number(wallet.totalEarned||0)+500,
+        lastDailyGiftAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
+      });
+      return {claimed:true,balance};
+    });
+    if(balanceEl)balanceEl.textContent=Number(result.balance||0).toLocaleString("en-US")+" عملة";
+    if(giftBtn){giftBtn.disabled=true;giftBtn.textContent="✓ الهدية اليومية مستلمة";}
+    if(noteEl)noteEl.textContent=result.claimed?"مبروك! اتضاف 500 عملة لرصيدك.":"هدية التسجيل موجودة بالفعل. حاول بعد 24 ساعة لاستلام الهدية اليومية.";
+    window.QHShowToast?.(result.claimed?"🎁 استلمت 500 عملة هدية يومية":"الهدية اليومية غير متاحة حاليًا");
+    return result;
   }catch(e){
     if(giftBtn){giftBtn.disabled=false;giftBtn.textContent="🎁 استلام الهدية اليومية · 500 عملة";}
-    if(noteEl)noteEl.textContent="تعذر استلام الهدية حاليًا؛ تأكد من تفعيل خدمات المحفظة.";
+    if(noteEl)noteEl.textContent="تعذر استلام الهدية. حاول مرة أخرى.";
     console.warn("[QH WALLET] claim",e);
     return null;
   }
