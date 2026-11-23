@@ -31,6 +31,14 @@ for path in files:
     end = src.index("\nfunction go(){", start)
     src = src[:start] + home + src[end:]
 
+    # Repaint the wallet whenever startScreen rebuilds the profile screen.
+    # The wallet card is recreated by innerHTML, so it must reload Firestore state
+    # (or paint its local cache) after every Next/Back/profile render.
+    wallet_reload = '''    wallet_hook = '    if(S.authenticated) setTimeout(() => window.QHAuth?.loadWallet(), 0)\n'
+    if wallet_hook.strip() not in src:
+        start_end = src.index("\\nfunction go(){", start)
+        src = src[:start_end] + "\\n" + wallet_hook + src[start_end:]
+
     if "qh-boot-screen" not in src:
         p = src.find("<body")
         if p < 0:
