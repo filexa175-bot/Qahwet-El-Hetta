@@ -17,7 +17,6 @@ let auth;
 try { auth=Capacitor.isNativePlatform()?initializeAuth(app,{persistence:indexedDBLocalPersistence}):getAuth(app); }
 catch(e){ auth=getAuth(app); }
 const db=getFirestore(app);
-const functions=getFunctions(app);
 const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function makeId(){let out="";for(let i=0;i<8;i++)out+=alphabet[Math.floor(Math.random()*alphabet.length)];return out;}
 function cleanName(v){return String(v||"").trim().replace(/[<>]/g,"").slice(0,18);}
