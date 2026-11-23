@@ -58,16 +58,19 @@ async function reservePlayerId(uid){
 // onAuthStateChanged while signIn() also calls saveProfile(); without this lock
 // both paths can reserve different IDs and race to create the same user document.
 const profileJobs = new Map();
+let lastAuthUserMatch = "unknown";
 async function verifyFirestoreSession(user){
   // Wait until the Firebase JS SDK has finished publishing the signed-in user,
   // then refresh the Firebase ID token before the first protected Firestore read.
   await auth.authStateReady();
   const active=auth.currentUser;
   if(!active || active.uid!==user.uid){
+    lastAuthUserMatch = "no";
     const mismatch=new Error("جلسة Firebase غير متطابقة مع الحساب المختار (active-user-mismatch)");
     mismatch.authUserMatch=false;
     throw mismatch;
   }
+  lastAuthUserMatch = "yes";
   await active.getIdToken(true);
   return active;
 }
@@ -85,6 +88,7 @@ async function saveProfile(user){
       }catch(readError){
         const activeUid=auth.currentUser?.uid||"none";
         const sameUid=activeUid===uid;
+        lastAuthUserMatch = sameUid ? "yes" : "no";
         const project=app.options.projectId||"unknown";
         const denied=new Error("Firestore get users/{uid} denied; project="+project+
           "; auth-user-matches-requested-user="+sameUid+
