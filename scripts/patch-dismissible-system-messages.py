@@ -40,6 +40,6 @@ for path in targets:
     body_close = src.rfind("</body>")
     if body_close < 0:
         raise SystemExit(f"No body close tag in {path}")
-    src = src[:body_close] + css + js + "\\n" + src[body_close:]
+    src = src[:body_close] + css + js + "\n" + src[body_close:]
     path.write_text(src, encoding="utf-8")
 print("Added dismissible system alerts and opponent message bubbles to both HTML entry points.")
