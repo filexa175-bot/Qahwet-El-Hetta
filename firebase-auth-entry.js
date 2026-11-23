@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider, signInWithCredential, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 const firebaseConfig = {
@@ -17,6 +18,7 @@ let auth;
 try { auth=Capacitor.isNativePlatform()?initializeAuth(app,{persistence:indexedDBLocalPersistence}):getAuth(app); }
 catch(e){ auth=getAuth(app); }
 const db=getFirestore(app);
+const functions=getFunctions(app);
 const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function makeId(){let out="";for(let i=0;i<8;i++)out+=alphabet[Math.floor(Math.random()*alphabet.length)];return out;}
 function cleanName(v){return String(v||"").trim().replace(/[<>]/g,"").slice(0,18);}
@@ -69,6 +71,7 @@ async function saveProfile(user){
       if(snap.exists()){
         const p=snap.data();
         window.QHApplyProfile?.(p,user);
+        setTimeout(loadWallet,350);
         return p;
       }
       stage="حجز معرّف اللاعب";
@@ -78,6 +81,7 @@ async function saveProfile(user){
       const p={uid,displayName:suggested,avatarIndex:0,playerId:id,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
       await setDoc(ref,p);
       window.QHApplyProfile?.(p,user);
+      setTimeout(loadWallet,350);
       return p;
     }catch(e){
       throw new Error(stage+": "+errorText(e));
@@ -119,6 +123,49 @@ async function updateProfile(displayName,avatarIndex){
   await setDoc(ref,{displayName:name,avatarIndex:Number(avatarIndex)||0,updatedAt:serverTimestamp()},{merge:true});
   const p=(await getDoc(ref)).data();window.QHApplyProfile?.(p,user);return p;
 }
+async function loadWallet(){
+  const balanceEl=document.getElementById("qh-wallet-balance");
+  const noteEl=document.getElementById("qh-wallet-note");
+  const giftBtn=document.getElementById("qh-daily-gift");
+  if(!auth.currentUser || !balanceEl) return null;
+  try{
+    const call=httpsCallable(functions,"getWallet");
+    const result=await call({});
+    const wallet=result.data||{};
+    balanceEl.textContent=Number(wallet.balance||0).toLocaleString("en-US")+" عملة";
+    const claimed=wallet.lastDailyGiftDay===wallet.today;
+    if(giftBtn){giftBtn.disabled=claimed;giftBtn.textContent=claimed?"✓ استلمت هدية النهارده":"🎁 استلام الهدية اليومية · 500 عملة";}
+    if(noteEl)noteEl.textContent=claimed?"هدية اليوم اتضافت بالفعل. ارجع بكرة لهدية جديدة.":"رصيدك الافتراضي محفوظ على حسابك.";
+    return wallet;
+  }catch(e){
+    if(balanceEl)balanceEl.textContent="المحفظة غير مفعّلة بعد";
+    if(giftBtn)giftBtn.disabled=true;
+    if(noteEl)noteEl.textContent="سيتم تفعيل المحفظة بعد نشر خدمات اللعبة.";
+    console.warn("[QH WALLET] load",e);
+    return null;
+  }
+}
+async function claimDailyGift(){
+  const giftBtn=document.getElementById("qh-daily-gift");
+  const noteEl=document.getElementById("qh-wallet-note");
+  if(giftBtn){giftBtn.disabled=true;giftBtn.textContent="جارٍ استلام الهدية...";}
+  try{
+    const call=httpsCallable(functions,"claimDailyGift");
+    const result=await call({});
+    const data=result.data||{};
+    const balanceEl=document.getElementById("qh-wallet-balance");
+    if(balanceEl)balanceEl.textContent=Number(data.balance||0).toLocaleString("en-US")+" عملة";
+    if(giftBtn){giftBtn.disabled=true;giftBtn.textContent=data.claimed?"✓ استلمت هدية النهارده":"✓ استلمت هدية النهارده";}
+    if(noteEl)noteEl.textContent=data.claimed?"مبروك! اتضاف 500 عملة لرصيدك.":"هدية اليوم اتضافت بالفعل.";
+    window.QHShowToast?.(data.claimed?"🎁 استلمت 500 عملة هدية يومية":"هدية النهارده استلمتها قبل كده");
+    return data;
+  }catch(e){
+    if(giftBtn){giftBtn.disabled=false;giftBtn.textContent="🎁 استلام الهدية اليومية · 500 عملة";}
+    if(noteEl)noteEl.textContent="تعذر استلام الهدية حاليًا؛ تأكد من تفعيل خدمات المحفظة.";
+    console.warn("[QH WALLET] claim",e);
+    return null;
+  }
+}
 async function signOut(){
   await FirebaseAuthentication.signOut();
   const {signOut:jsSignOut}=await import('firebase/auth');
@@ -129,7 +176,7 @@ async function restore(){
   const user=auth.currentUser;
   if(user){try{await saveProfile(user);}catch(e){console.warn("QH restore/profile",e);window.showToast?.("تعذر تحميل ملف اللاعب: "+errorText(e));}}
 }
-window.QHAuth={signIn,updateProfile,signOut,restore,get currentUser(){return auth.currentUser;},get db(){return db;}};
+window.QHAuth={signIn,updateProfile,signOut,restore,loadWallet,claimDailyGift,get currentUser(){return auth.currentUser;},get db(){return db;}};
 window.QHAuthReady=true;
 console.info("[QH AUTH] Firebase auth bundle initialized; native="+Capacitor.isNativePlatform());
 onAuthStateChanged(auth,user=>{if(user)restore().catch(e=>console.warn("QH auth state",e));});
