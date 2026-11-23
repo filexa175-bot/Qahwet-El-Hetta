@@ -16,16 +16,16 @@ for path in files:
     src = path.read_text(encoding="utf-8")
 
     # Extend the existing local profile without disturbing game counters.
-    if "stake:50" not in src:
-        if "mode:'ai',domScore:" not in src:
-            raise SystemExit(f"Cannot locate game settings for stake default in {path}")
-        src = src.replace("mode:'ai',domScore:", "mode:'ai',stake:50,domScore:", 1)
-
     if "profileStep:1" not in src:
         needle = "const S={game:0,ch:0,df:1,playerName:'',"
         if src.count(needle) != 1:
             raise SystemExit(f"Cannot locate game state in {path}")
         src = src.replace(needle, "const S={game:0,ch:0,df:1,playerName:'',playerId:'',profileStep:1,mode:'ai',", 1)
+
+    if "stake:50" not in src:
+        if "mode:'ai'," not in src:
+            raise SystemExit(f"Cannot locate game mode for stake default in {path}")
+        src = src.replace("mode:'ai',", "mode:'ai',stake:50,", 1)
 
     saved_needle = "if(SAVED.settings)Object.assign(S,{game:SAVED.settings.game??0,ch:SAVED.settings.ch??0,df:SAVED.settings.df??1,playerName:SAVED.settings.playerName??''});"
     saved_replacement = "if(SAVED.settings)Object.assign(S,{game:SAVED.settings.game??0,ch:SAVED.settings.ch??0,df:SAVED.settings.df??1,playerName:SAVED.settings.playerName??'',playerId:SAVED.settings.playerId??'',profileStep:SAVED.settings.profileStep??1,mode:SAVED.settings.mode??'ai',stake:SAVED.settings.stake??50});"
