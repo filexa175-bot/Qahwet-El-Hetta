@@ -36,6 +36,15 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Wallets and ledgers are server-authoritative. Clients must use
+    // authenticated callable functions; never write balances from the app.
+    match /wallets/{uid} {
+      allow read, write: if false;
+      match /ledger/{entryId} {
+        allow read, write: if false;
+      }
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }
