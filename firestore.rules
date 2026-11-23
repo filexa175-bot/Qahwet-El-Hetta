@@ -36,10 +36,40 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Wallets and ledgers are server-authoritative. Clients must use
-    // authenticated callable functions; never write balances from the app.
+    // Wallet balance is client-accessible only through tightly constrained
+    // Firestore writes. A new account may initialize exactly 500 coins once.
+    // A daily gift adds exactly 500 coins, with a server-time 24-hour cooldown.
     match /wallets/{uid} {
-      allow read, write: if false;
+      allow get: if owns(uid);
+      allow list: if false;
+      allow create: if owns(uid)
+        && request.resource.data.keys().hasOnly([
+          'uid','balance','totalEarned','registrationGiftClaimed',
+          'lastDailyGiftAt','createdAt','updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.balance == 500
+        && request.resource.data.totalEarned == 500
+        && request.resource.data.registrationGiftClaimed == true
+        && request.resource.data.lastDailyGiftAt == null
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if owns(uid)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.registrationGiftClaimed == resource.data.registrationGiftClaimed
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'balance','totalEarned','lastDailyGiftAt','updatedAt'
+        ])
+        && request.resource.data.balance is number
+        && request.resource.data.totalEarned is number
+        && request.resource.data.balance == resource.data.balance + 500
+        && request.resource.data.totalEarned == resource.data.totalEarned + 500
+        && request.resource.data.lastDailyGiftAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && (resource.data.lastDailyGiftAt == null
+          || resource.data.lastDailyGiftAt + duration.value(24, 'h') <= request.time);
+      allow delete: if false;
       match /ledger/{entryId} {
         allow read, write: if false;
       }
