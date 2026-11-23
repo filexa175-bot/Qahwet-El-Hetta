@@ -145,7 +145,7 @@ async function signIn(){
   let stage="فتح نافذة اختيار حساب Google";
   authNotice("جاري فتح تسجيل Google...");
   try{
-    const result=await FirebaseAuthentication.signInWithGoogle();
+    const result=await FirebaseAuthentication.signInWithGoogle({useCredentialManager:false});
     const idToken=result?.credential?.idToken;
     const accessToken=result?.credential?.accessToken;
     if(!idToken && !accessToken){
