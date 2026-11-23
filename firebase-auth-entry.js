@@ -68,6 +68,7 @@ async function saveProfile(user){
       const snap=await getDoc(ref);
       if(snap.exists()){
         const p=snap.data();
+        if(p.playerId) await setDoc(doc(db,"publicProfiles",p.playerId),{uid,playerId:p.playerId,displayName:p.displayName||"لاعب",avatarIndex:Number(p.avatarIndex)||0,updatedAt:serverTimestamp()},{merge:true});
         window.QHApplyProfile?.(p,user);
         setTimeout(loadWallet,350);
         return p;
