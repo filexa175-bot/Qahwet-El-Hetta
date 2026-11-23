@@ -4,8 +4,8 @@ files = [Path("www/index.html"), Path("www/game.html")]
 home = Path("../scripts/player-home-screen.html.txt").read_text(encoding="utf-8").rstrip()
 # Keep the wallet in sync whenever the profile screen is rebuilt (Next/Back).
 home = home.replace(
-    "    </div>\u0024{S.set?setSheet():''}`\\n}",
-    "    </div>\u0024{S.set?setSheet():''}`\\n    if (S.authenticated) setTimeout(() => window.QHAuth?.loadWallet(), 0);\\n}",
+    "    </div>\u0024{S.set?setSheet():''}`\n}",
+    "    </div>\u0024{S.set?setSheet():''}`\n    if (S.authenticated) setTimeout(() => window.QHAuth?.loadWallet(), 0);\n}",
     1
 )
 
