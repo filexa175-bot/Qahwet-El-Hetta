@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider, signInWithCredential, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 const firebaseConfig = {
@@ -78,6 +78,7 @@ async function saveProfile(user){
       stage="إنشاء ملف اللاعب";
       const p={uid,displayName:suggested,avatarIndex:0,playerId:id,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
       await setDoc(ref,p);
+      await setDoc(doc(db,"publicProfiles",id),{uid,playerId:id,displayName:suggested,avatarIndex:0,updatedAt:serverTimestamp()});
       window.QHApplyProfile?.(p,user);
       setTimeout(loadWallet,350);
       return p;
@@ -119,7 +120,9 @@ async function updateProfile(displayName,avatarIndex){
   const name=cleanName(displayName);if(name.length<2)throw new Error("الاسم لازم يكون حرفين على الأقل");
   const ref=doc(db,"users",user.uid);
   await setDoc(ref,{displayName:name,avatarIndex:Number(avatarIndex)||0,updatedAt:serverTimestamp()},{merge:true});
-  const p=(await getDoc(ref)).data();window.QHApplyProfile?.(p,user);return p;
+  const p=(await getDoc(ref)).data();
+  if(p?.playerId)await setDoc(doc(db,"publicProfiles",p.playerId),{uid:user.uid,playerId:p.playerId,displayName:name,avatarIndex:Number(avatarIndex)||0,updatedAt:serverTimestamp()},{merge:true});
+  window.QHApplyProfile?.(p,user);return p;
 }
 const walletRefFor = uid => doc(db,"wallets",uid);
 const walletCacheKey = uid => "qh_wallet_cache_v1_" + uid;
@@ -263,7 +266,40 @@ async function restore(){
   const user=auth.currentUser;
   if(user){try{await saveProfile(user);}catch(e){console.warn("QH restore/profile",e);window.showToast?.("تعذر تحميل ملف اللاعب: "+errorText(e));}}
 }
-window.QHAuth={signIn,updateProfile,signOut,restore,loadWallet,claimDailyGift,get currentUser(){return auth.currentUser;},get db(){return db;}};
+
+// Lightweight friends foundation: public player lookup and friend requests.
+async function findPlayerById(playerId){
+  const id=String(playerId||"").trim().toUpperCase();
+  if(!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/.test(id))throw new Error("اكتب PLAYER ID صحيح من 8 خانات");
+  const snap=await getDoc(doc(db,"publicProfiles",id));
+  if(!snap.exists())return null;
+  const p=snap.data();if(p.uid===auth.currentUser?.uid)return {self:true,...p};
+  return p;
+}
+async function sendFriendRequest(playerId){
+  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
+  const target=await findPlayerById(playerId);if(!target)throw new Error("مش لاقيين لاعب بالمعرف ده");
+  if(target.self)throw new Error("مينفعش تبعت طلب لنفسك");
+  const requestId=user.uid+"__"+target.uid;
+  const ref=doc(db,"friendRequests",requestId);
+  const old=await getDoc(ref);if(old.exists())throw new Error("فيه طلب صداقة موجود بالفعل");
+  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:window.QHProfile?.playerId||"",toPlayerId:target.playerId,status:"pending",createdAt:serverTimestamp()});
+  return target;
+}
+async function listFriendRequests(){
+ const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
+ const incoming=await getDocs(query(collection(db,"friendRequests"),where("toUid","==",user.uid),where("status","==","pending")));
+ const outgoing=await getDocs(query(collection(db,"friendRequests"),where("fromUid","==",user.uid),where("status","==","pending")));
+ return {incoming:incoming.docs.map(x=>({id:x.id,...x.data()})),outgoing:outgoing.docs.map(x=>({id:x.id,...x.data()}))};
+}
+async function respondFriendRequest(requestId,accept){
+ const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
+ const ref=doc(db,"friendRequests",requestId);
+ await runTransaction(db,async tx=>{const snap=await tx.get(ref);if(!snap.exists()||snap.data().toUid!==user.uid||snap.data().status!=="pending")throw new Error("طلب الصداقة غير متاح");tx.update(ref,{status:accept?"accepted":"declined",respondedAt:serverTimestamp()});});
+ return true;
+}
+window.QHFriends={findPlayerById,sendFriendRequest,listFriendRequests,respondFriendRequest};
+\nwindow.QHAuth={signIn,updateProfile,signOut,restore,loadWallet,claimDailyGift,get currentUser(){return auth.currentUser;},get db(){return db;}};
 window.QHAuthReady=true;
 console.info("[QH AUTH] Firebase auth bundle initialized; native="+Capacitor.isNativePlatform());
 onAuthStateChanged(auth,user=>{if(user)restore().catch(e=>console.warn("QH auth state",e));});
