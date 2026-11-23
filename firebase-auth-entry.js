@@ -122,6 +122,7 @@ async function updateProfile(displayName,avatarIndex){
   const p=(await getDoc(ref)).data();window.QHApplyProfile?.(p,user);return p;
 }
 const walletRefFor = uid => doc(db,"wallets",uid);
+const walletCacheKey = uid => "qh_wallet_cache_v1_" + uid;
 const walletInitialData = uid => ({
   uid, balance: 500, totalEarned: 500,
   registrationGiftClaimed: true,
@@ -130,36 +131,83 @@ const walletInitialData = uid => ({
   updatedAt: serverTimestamp()
 });
 const DAILY_GIFT_MS = 24 * 60 * 60 * 1000;
+let walletLoadJob = null;
+let currentWalletData = null;
 
-async function loadWallet(){
+function readWalletCache(uid){
+  try{
+    const raw=localStorage.getItem(walletCacheKey(uid));
+    if(!raw)return null;
+    const data=JSON.parse(raw);
+    if(!data || !Number.isFinite(Number(data.balance)))return null;
+    return data;
+  }catch(_){return null;}
+}
+function writeWalletCache(uid,data){
+  try{
+    const last=data.lastDailyGiftAt?.toMillis?.() ??
+      (typeof data.lastDailyGiftAt==="number"?data.lastDailyGiftAt:null);
+    const safe={
+      balance:Number(data.balance||0),
+      totalEarned:Number(data.totalEarned||0),
+      lastDailyGiftAt:last
+    };
+    localStorage.setItem(walletCacheKey(uid),JSON.stringify(safe));
+  }catch(_){}
+}
+function paintWallet(data){
+  if(!data)return;
+  currentWalletData=data;
   const balanceEl=document.getElementById("qh-wallet-balance");
   const noteEl=document.getElementById("qh-wallet-note");
   const giftBtn=document.getElementById("qh-daily-gift");
+  const last=data.lastDailyGiftAt?.toMillis?.() ??
+    (typeof data.lastDailyGiftAt==="number"?data.lastDailyGiftAt:null);
+  const ready=last===null || (Date.now()-last)>=DAILY_GIFT_MS;
+  if(balanceEl)balanceEl.textContent=Number(data.balance||0).toLocaleString("en-US")+" عملة";
+  if(giftBtn){giftBtn.disabled=!ready;giftBtn.textContent=ready?"🎁 استلام الهدية اليومية · 500 عملة":"✓ الهدية اليومية مستلمة";}
+  if(noteEl)noteEl.textContent=ready?"هدية 500 عملة متاحة بعد مرور 24 ساعة على آخر استلام.":"تقدر تستلم هدية جديدة بعد مرور 24 ساعة على آخر استلام.";
+}
+
+async function loadWallet(){
   const user=auth.currentUser;
-  if(!user || !balanceEl) return null;
-  try{
-    const ref=walletRefFor(user.uid);
-    let walletData;
-    await runTransaction(db,async tx=>{
-      const snap=await tx.get(ref);
+  if(!user)return null;
+  // Paint the last known balance immediately; Firebase refreshes it below.
+  const cached=readWalletCache(user.uid);
+  if(cached)paintWallet(cached);
+  if(walletLoadJob)return walletLoadJob;
+  walletLoadJob=(async()=>{
+    try{
+      const ref=walletRefFor(user.uid);
+      let snap=await getDoc(ref);
       if(!snap.exists()){
-        tx.set(ref,walletInitialData(user.uid));
-        walletData={balance:500,totalEarned:500,lastDailyGiftAt:null};
-      }else walletData=snap.data();
-    });
-    const last=walletData.lastDailyGiftAt?.toMillis?.() ?? null;
-    const ready=last===null || (Date.now()-last)>=DAILY_GIFT_MS;
-    balanceEl.textContent=Number(walletData.balance||0).toLocaleString("en-US")+" عملة";
-    if(giftBtn){giftBtn.disabled=!ready;giftBtn.textContent=ready?"🎁 استلام الهدية اليومية · 500 عملة":"✓ الهدية اليومية مستلمة";}
-    if(noteEl)noteEl.textContent=ready?"هدية 500 عملة متاحة بعد مرور 24 ساعة على آخر استلام.":"تقدر تستلم هدية جديدة بعد مرور 24 ساعة على آخر استلام.";
-    return walletData;
-  }catch(e){
-    if(balanceEl)balanceEl.textContent="تعذر تحميل الرصيد";
-    if(giftBtn)giftBtn.disabled=true;
-    if(noteEl)noteEl.textContent="تعذر الوصول للمحفظة. تحقق من الاتصال وحاول مرة أخرى.";
-    console.warn("[QH WALLET] load",e);
-    return null;
-  }
+        // Create the starter wallet only when it truly does not exist.
+        await runTransaction(db,async tx=>{
+          const fresh=await tx.get(ref);
+          if(!fresh.exists())tx.set(ref,walletInitialData(user.uid));
+        });
+        snap=await getDoc(ref);
+      }
+      if(!snap.exists())throw new Error("wallet document missing after initialization");
+      const data=snap.data();
+      writeWalletCache(user.uid,data);
+      paintWallet(data);
+      return data;
+    }catch(e){
+      // Keep a previously cached balance visible during temporary network errors.
+      if(!cached){
+        const balanceEl=document.getElementById("qh-wallet-balance");
+        const giftBtn=document.getElementById("qh-daily-gift");
+        const noteEl=document.getElementById("qh-wallet-note");
+        if(balanceEl)balanceEl.textContent="تعذر تحميل الرصيد";
+        if(giftBtn)giftBtn.disabled=true;
+        if(noteEl)noteEl.textContent="تعذر تحديث المحفظة. الرصيد المحفوظ سيظهر عند توفر الاتصال.";
+      }
+      console.warn("[QH WALLET] load",e);
+      return cached;
+    }finally{walletLoadJob=null;}
+  })();
+  return walletLoadJob;
 }
 
 async function claimDailyGift(){
@@ -192,6 +240,8 @@ async function claimDailyGift(){
       return {claimed:true,balance};
     });
     if(balanceEl)balanceEl.textContent=Number(result.balance||0).toLocaleString("en-US")+" عملة";
+    const latest=(await getDoc(ref)).data();
+    if(latest){writeWalletCache(user.uid,latest);paintWallet(latest);}
     if(giftBtn){giftBtn.disabled=true;giftBtn.textContent="✓ الهدية اليومية مستلمة";}
     if(noteEl)noteEl.textContent=result.claimed?"مبروك! اتضاف 500 عملة لرصيدك.":"هدية التسجيل موجودة بالفعل. حاول بعد 24 ساعة لاستلام الهدية اليومية.";
     window.QHShowToast?.(result.claimed?"🎁 استلمت 500 عملة هدية يومية":"الهدية اليومية غير متاحة حاليًا");
