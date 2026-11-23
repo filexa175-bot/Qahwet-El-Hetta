@@ -42,9 +42,11 @@ jobs:
           mkdir app-source
           unzip -q "$SOURCE_ZIP" -d app-source
 
-      - name: Apply player profile and home screen update
+      - name: Validate and apply player profile and home screen update
         working-directory: app-source
-        run: python3 ../scripts/patch-player-profile.py
+        run: |
+          python3 -m py_compile ../scripts/patch-player-profile.py
+          python3 ../scripts/patch-player-profile.py
 
       - name: Inspect extracted application source
         working-directory: app-source
