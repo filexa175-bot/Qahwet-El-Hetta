@@ -22,6 +22,7 @@ window.QHApplyProfile = (p) => {
   try {
     S.playerName = p.displayName || S.playerName;
     S.playerId = p.playerId || S.playerId;
+    S.authenticated = true;
     S.ch = Number.isInteger(p.avatarIndex) ? p.avatarIndex : S.ch;
     S.profileStep = 1;
     persist();
@@ -32,6 +33,7 @@ window.QHApplySignedOut = () => {
   try {
     if (!window.S) return;
     S.playerId = "";
+    S.authenticated = false;
     persist();
     if (typeof startScreen === "function") startScreen();
   } catch (e) { console.error("QH sign-out bridge", e); }
