@@ -288,9 +288,9 @@ async function sendFriendRequest(playerId){
 }
 async function listFriendRequests(){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
- const incoming=await getDocs(query(collection(db,"friendRequests"),where("toUid","==",user.uid),where("status","==","pending")));
- const outgoing=await getDocs(query(collection(db,"friendRequests"),where("fromUid","==",user.uid),where("status","==","pending")));
- return {incoming:incoming.docs.map(x=>({id:x.id,...x.data()})),outgoing:outgoing.docs.map(x=>({id:x.id,...x.data()}))};
+ const incoming=await getDocs(query(collection(db,"friendRequests"),where("toUid","==",user.uid)));
+ const outgoing=await getDocs(query(collection(db,"friendRequests"),where("fromUid","==",user.uid)));
+ return {incoming:incoming.docs.map(x=>({id:x.id,...x.data()})).filter(x=>x.status==="pending"),outgoing:outgoing.docs.map(x=>({id:x.id,...x.data()})).filter(x=>x.status==="pending")};
 }
 async function respondFriendRequest(requestId,accept){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
