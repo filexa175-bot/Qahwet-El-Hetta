@@ -27,6 +27,9 @@ window.QHApplyProfile = (p) => {
     S.profileStep = 1;
     persist();
     if (typeof startScreen === "function") startScreen();
+    // Clear the persistent sign-in progress/diagnostic banner on success.
+    const diagnostic = document.getElementById("qh-auth-diagnostic");
+    if (diagnostic) diagnostic.remove();
     if (typeof window.QHShowToast === "function") window.QHShowToast("تم ربط حسابك وحفظ ملفك بنجاح ☕");
   } catch (e) { console.error("QH profile bridge", e); }
 };
