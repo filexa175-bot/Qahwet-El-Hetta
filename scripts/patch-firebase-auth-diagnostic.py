@@ -13,11 +13,11 @@ if old_style in src:
 
 old_catch = 'const message="تعذر "+stage+": "+errorText(e);'
 new_catch = '''const active=auth.currentUser;
-    const uidMatch=!!active && !!e && !!(e.user?.uid) && active.uid===e.user.uid;
-    const message="QH-DIAG-20261123-A | تعذر "+stage+
+    const uidMatch=e?.authUserMatch===true?"yes":e?.authUserMatch===false?"no":"unknown";
+    const message="QH-DIAG-20261123-B | تعذر "+stage+
       " | project="+(app.options.projectId||"unknown")+
       " | js-session="+(active?"present":"missing")+
-      " | auth-user-match="+(uidMatch?"yes":"unknown")+
+      " | auth-user-match="+uidMatch+
       " | error="+errorText(e);'''
 if old_catch not in src:
     raise SystemExit("Expected signIn error handler was not found; refusing unsafe patch")
