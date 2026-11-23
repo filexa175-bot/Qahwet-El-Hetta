@@ -58,14 +58,37 @@ async function reservePlayerId(uid){
 // onAuthStateChanged while signIn() also calls saveProfile(); without this lock
 // both paths can reserve different IDs and race to create the same user document.
 const profileJobs = new Map();
+async function verifyFirestoreSession(user){
+  // Wait until the Firebase JS SDK has finished publishing the signed-in user,
+  // then refresh the Firebase ID token before the first protected Firestore read.
+  await auth.authStateReady();
+  const active=auth.currentUser;
+  if(!active || active.uid!==user.uid){
+    throw new Error("جلسة Firebase غير متطابقة مع الحساب المختار (active-user-mismatch)");
+  }
+  await active.getIdToken(true);
+  return active;
+}
 async function saveProfile(user){
   const uid=user.uid;
   if(profileJobs.has(uid)) return profileJobs.get(uid);
   const job=(async()=>{
     let stage="قراءة ملف اللاعب";
     try{
+      await verifyFirestoreSession(user);
       const ref=doc(db,"users",uid);
-      const snap=await getDoc(ref);
+      let snap;
+      try{
+        snap=await getDoc(ref);
+      }catch(readError){
+        const activeUid=auth.currentUser?.uid||"none";
+        const sameUid=activeUid===uid;
+        const project=app.options.projectId||"unknown";
+        throw new Error("Firestore get users/{uid} denied; project="+project+
+          "; auth-user-matches-requested-user="+sameUid+
+          "; firebase-session="+(activeUid==="none"?"missing":"present")+
+          "; cause="+errorText(readError));
+      }
       if(snap.exists()){
         const p=snap.data();
         if(p.playerId) await setDoc(doc(db,"publicProfiles",p.playerId),{uid,playerId:p.playerId,displayName:p.displayName||"لاعب",avatarIndex:Number(p.avatarIndex)||0,updatedAt:serverTimestamp()},{merge:true});
