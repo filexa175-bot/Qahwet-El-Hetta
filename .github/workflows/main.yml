@@ -86,6 +86,10 @@ jobs:
           cp ../firebase-auth-entry.js ./firebase-auth-entry.js
           python3 ../scripts/patch-firebase-auth-diagnostic.py
           npx esbuild ./firebase-auth-entry.js --bundle --platform=browser --format=iife --outfile=www/firebase-auth.js
+          echo "=== VERIFY FIREBASE DIAGNOSTIC BUNDLE ==="
+          grep -Fq 'QH-DIAG-20261123-A' www/firebase-auth.js
+          grep -Fq 'project=' www/firebase-auth.js
+          echo "Diagnostic marker confirmed in bundled web asset."
 
       - name: Prepare Android project
         working-directory: app-source
@@ -117,6 +121,38 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug assembleRelease
+
+      - name: Verify diagnostic marker inside final APKs
+        working-directory: app-source/android
+        run: |
+          set -euo pipefail
+          for APK in app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/release/app-release.apk; do
+            test -s "$APK"
+            ENTRY=$(unzip -Z1 "$APK" | grep -E '(^|/)firebase-auth\\.js
+      - name: Upload debug APK (backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: qahwet-el-hetta-debug-apk
+          path: app-source/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Upload signed release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: qahwet-el-hetta-signed-release-apk
+          path: app-source/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+ | head -n 1 || true)
+            if [ -z "$ENTRY" ]; then
+              echo "firebase-auth.js was not found inside $APK"
+              exit 1
+            fi
+            if ! unzip -p "$APK" "$ENTRY" | grep -Fq 'QH-DIAG-20261123-A'; then
+              echo "Diagnostic marker is missing from $APK ($ENTRY)"
+              exit 1
+            fi
+            echo "Verified QH-DIAG-20261123-A inside $APK at $ENTRY"
+          done
 
       - name: Upload debug APK (backup)
         uses: actions/upload-artifact@v4
