@@ -222,8 +222,10 @@ function paintWallet(data){
   if(giftBtn){giftBtn.disabled=!ready;giftBtn.textContent=ready?"🎁 استلام الهدية اليومية · 500 عملة":"✓ الهدية اليومية مستلمة";}
   if(noteEl)noteEl.textContent=ready?"هدية 500 عملة متاحة بعد مرور 24 ساعة على آخر استلام.":"تقدر تستلم هدية جديدة بعد مرور 24 ساعة على آخر استلام.";
   const bubbleBalance=document.getElementById("qh-wallet-bubble-balance");
+  const bubbleBalanceLarge=document.getElementById("qh-wallet-bubble-balance-large");
   const bubbleGift=document.getElementById("qh-wallet-bubble-gift");
   if(bubbleBalance)bubbleBalance.textContent=Number(data.balance||0).toLocaleString("en-US");
+  if(bubbleBalanceLarge)bubbleBalanceLarge.textContent=Number(data.balance||0).toLocaleString("en-US");
   if(bubbleGift){bubbleGift.disabled=!ready;bubbleGift.textContent=ready?"استلام الهدية اليومية · 500":"الهدية مستلمة";}
 }
 
