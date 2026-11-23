@@ -54,20 +54,38 @@ async function reservePlayerId(uid){
   }
   throw new Error("تعذر إنشاء معرف لاعب، حاول مرة أخرى");
 }
+// Share one profile-creation operation per UID. signInWithCredential triggers
+// onAuthStateChanged while signIn() also calls saveProfile(); without this lock
+// both paths can reserve different IDs and race to create the same user document.
+const profileJobs = new Map();
 async function saveProfile(user){
-  const ref=doc(db,"users",user.uid);
-  const snap=await getDoc(ref);
-  if(snap.exists()){
-    const p=snap.data();
-    window.QHApplyProfile?.(p,user);
-    return p;
-  }
-  const suggested=cleanName(user.displayName)||"لاعب جديد";
-  const id=await reservePlayerId(user.uid);
-  const p={uid:user.uid,displayName:suggested,avatarIndex:0,playerId:id,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
-  await setDoc(ref,p);
-  window.QHApplyProfile?.(p,user);
-  return p;
+  const uid=user.uid;
+  if(profileJobs.has(uid)) return profileJobs.get(uid);
+  const job=(async()=>{
+    let stage="قراءة ملف اللاعب";
+    try{
+      const ref=doc(db,"users",uid);
+      const snap=await getDoc(ref);
+      if(snap.exists()){
+        const p=snap.data();
+        window.QHApplyProfile?.(p,user);
+        return p;
+      }
+      stage="حجز معرّف اللاعب";
+      const suggested=cleanName(user.displayName)||"لاعب جديد";
+      const id=await reservePlayerId(uid);
+      stage="إنشاء ملف اللاعب";
+      const p={uid,displayName:suggested,avatarIndex:0,playerId:id,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+      await setDoc(ref,p);
+      window.QHApplyProfile?.(p,user);
+      return p;
+    }catch(e){
+      throw new Error(stage+": "+errorText(e));
+    }
+  })();
+  profileJobs.set(uid,job);
+  try{return await job;}
+  finally{if(profileJobs.get(uid)===job) profileJobs.delete(uid);}
 }
 async function signIn(){
   let stage="فتح نافذة اختيار حساب Google";
