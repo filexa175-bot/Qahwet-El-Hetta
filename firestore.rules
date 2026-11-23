@@ -67,7 +67,8 @@ service cloud.firestore {
         && request.resource.data.totalEarned == resource.data.totalEarned + 500
         && request.resource.data.lastDailyGiftAt == request.time
         && request.resource.data.updatedAt == request.time
-        && (resource.data.lastDailyGiftAt == null
+        && (!('lastDailyGiftAt' in resource.data)
+          || resource.data.lastDailyGiftAt == null
           || resource.data.lastDailyGiftAt + duration.value(24, 'h') <= request.time);
       allow delete: if false;
       match /ledger/{entryId} {
