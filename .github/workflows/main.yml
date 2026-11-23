@@ -84,6 +84,7 @@ jobs:
           python3 ../scripts/patch-firebase-auth.py
           npm install
           cp ../firebase-auth-entry.js ./firebase-auth-entry.js
+          python3 ../scripts/patch-firebase-auth-diagnostic.py
           npx esbuild ./firebase-auth-entry.js --bundle --platform=browser --format=iife --outfile=www/firebase-auth.js
 
       - name: Prepare Android project
