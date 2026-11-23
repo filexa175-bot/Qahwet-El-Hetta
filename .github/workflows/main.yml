@@ -74,6 +74,10 @@ jobs:
         run: python3 ../scripts/patch-background-music.py
         working-directory: app-source
 
+      - name: Add dismissible system messages
+        run: python3 ../scripts/patch-dismissible-system-messages.py
+        working-directory: app-source
+
       - name: Install dependencies and bundle Firebase auth
         working-directory: app-source
         run: |
