@@ -64,7 +64,9 @@ async function verifyFirestoreSession(user){
   await auth.authStateReady();
   const active=auth.currentUser;
   if(!active || active.uid!==user.uid){
-    throw new Error("جلسة Firebase غير متطابقة مع الحساب المختار (active-user-mismatch)");
+    const mismatch=new Error("جلسة Firebase غير متطابقة مع الحساب المختار (active-user-mismatch)");
+    mismatch.authUserMatch=false;
+    throw mismatch;
   }
   await active.getIdToken(true);
   return active;
@@ -84,10 +86,12 @@ async function saveProfile(user){
         const activeUid=auth.currentUser?.uid||"none";
         const sameUid=activeUid===uid;
         const project=app.options.projectId||"unknown";
-        throw new Error("Firestore get users/{uid} denied; project="+project+
+        const denied=new Error("Firestore get users/{uid} denied; project="+project+
           "; auth-user-matches-requested-user="+sameUid+
           "; firebase-session="+(activeUid==="none"?"missing":"present")+
           "; cause="+errorText(readError));
+        denied.authUserMatch=sameUid;
+        throw denied;
       }
       if(snap.exists()){
         const p=snap.data();
@@ -107,7 +111,9 @@ async function saveProfile(user){
       setTimeout(loadWallet,350);
       return p;
     }catch(e){
-      throw new Error(stage+": "+errorText(e));
+      const wrapped=new Error(stage+": "+errorText(e));
+      if(typeof e?.authUserMatch==="boolean")wrapped.authUserMatch=e.authUserMatch;
+      throw wrapped;
     }
   })();
   profileJobs.set(uid,job);
