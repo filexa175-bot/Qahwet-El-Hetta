@@ -1,10 +1,11 @@
 from pathlib import Path
+import re
 
 targets = [Path("www/index.html"), Path("www/game.html")]
 css = """
 <style id="qh-dismissible-system-ui">
 .top .bub{position:relative;padding-right:34px}
-        '''${esc(G.msg)}<button class="qh-bubble-close" type="button" aria-label="إغلاق" onclick="qhDismissOpponentMessage()">×</button>''',
+.qh-bubble-close{position:absolute;right:7px;top:5px;width:25px;height:25px;border:1px solid #d2ad72;border-radius:50%;background:#52382c;color:#fff;font-size:19px;line-height:20px;cursor:pointer}
 #qh-system-notice{position:fixed;inset:0;z-index:200000;display:none;align-items:center;justify-content:center;padding:22px;background:#0009}
 #qh-system-notice.show{display:flex}
 #qh-system-notice .qh-notice-card{position:relative;width:min(420px,100%);padding:24px 20px 20px;border:2px solid #b88a4d;border-radius:18px;background:linear-gradient(145deg,#29473e,#142a25);color:#fff0d1;box-shadow:0 16px 50px #0009;text-align:center;font:600 16px/1.7 system-ui}
@@ -18,21 +19,20 @@ js = """
 </div>
 <script id="qh-dismissible-system-messages">
 function qhCloseSystemNotice(){const n=document.getElementById('qh-system-notice');if(n)n.classList.remove('show')}
-function qhShowSystemNotice(message){const n=document.getElementById('qh-system-notice'),t=document.getElementById('qh-system-notice-text');if(!n||!t)return; t.textContent=String(message??'');n.classList.add('show')}
+function qhShowSystemNotice(message){const n=document.getElementById('qh-system-notice'),t=document.getElementById('qh-system-notice-text');if(!n||!t)return;t.textContent=String(message??'');n.classList.add('show')}
 window.alert=function(message){qhShowSystemNotice(message)};
 document.addEventListener('keydown',function(e){if(e.key==='Escape')qhCloseSystemNotice()});
 document.addEventListener('click',function(e){if(e.target&&e.target.id==='qh-system-notice')qhCloseSystemNotice()});
-function qhDismissOpponentMessage(){if(!G)return;clearTimeout(G.msgTimer);G.msgVisible=false;G.msg='';render()}
+function qhDismissOpponentMessage(){if(typeof G==='undefined'||!G)return;if(G.msgTimer)clearTimeout(G.msgTimer);G.msgVisible=false;G.msg='';if(typeof render==='function')render()}
 </script>
 """
 for path in targets:
     src = path.read_text(encoding="utf-8")
     if "qh-dismissible-system-messages" in src:
         continue
-    # Add a close control to every in-game opponent speech bubble.
-    src, count = __import__("re").subn(
+    src, count = re.subn(
         r"\$\{esc\(G\.msg\)\}(?=</div>)",
-        "${esc(G.msg)}<button class=\\"qh-bubble-close\\" type=\\"button\\" aria-label=\\"إغلاق\\" onclick=\\"qhDismissOpponentMessage()\\">×</button>",
+        '${esc(G.msg)}<button class="qh-bubble-close" type="button" aria-label="إغلاق" onclick="qhDismissOpponentMessage()">×</button>',
         src
     )
     if count < 1:
@@ -40,6 +40,6 @@ for path in targets:
     body_close = src.rfind("</body>")
     if body_close < 0:
         raise SystemExit(f"No body close tag in {path}")
-    src = src[:body_close] + css + js + "\n" + src[body_close:]
+    src = src[:body_close] + css + js + "\\n" + src[body_close:]
     path.write_text(src, encoding="utf-8")
 print("Added dismissible system alerts and opponent message bubbles to both HTML entry points.")
