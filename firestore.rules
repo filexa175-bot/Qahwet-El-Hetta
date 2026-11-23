@@ -76,6 +76,45 @@ service cloud.firestore {
       }
     }
 
+
+    // Public, minimal player directory used only for PLAYER ID lookup.
+    match /publicProfiles/{playerId} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.playerId == playerId
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 2
+        && request.resource.data.displayName.size() <= 18
+        && request.resource.data.keys().hasOnly(['uid','playerId','displayName','avatarIndex','updatedAt']);
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.playerId == playerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName','avatarIndex','updatedAt']);
+      allow delete: if false;
+    }
+
+    // Requests can be created by the sender and answered only by the recipient.
+    match /friendRequests/{requestId} {
+      allow get, list: if signedIn()
+        && (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid is string
+        && request.resource.data.toUid != request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(['fromUid','toUid','fromPlayerId','toPlayerId','status','createdAt']);
+      allow update: if signedIn()
+        && resource.data.toUid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','respondedAt'])
+        && request.resource.data.status in ['accepted','declined']
+        && request.resource.data.respondedAt == request.time;
+      allow delete: if false;
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }
