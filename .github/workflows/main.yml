@@ -54,7 +54,8 @@ jobs:
           python3 -m py_compile ../scripts/patch-design-pass-106.py
           python3 ../scripts/patch-design-pass-106.py
           grep -Fq 'QH DESIGN PASS 106' www/index.html
-          grep -Fq 'qh-sign-art' www/index.html
+          grep -Fq 'qh-hero' www/index.html
+          grep -Fq 'qh-dev-kicker' ../scripts/player-home-screen.html.txt
           grep -Fq 'Powered by Filexawy' www/index.html
           grep -Fq 'QH DESIGN PASS 106' www/game.html
           echo "Build 106 visual design markers verified."
