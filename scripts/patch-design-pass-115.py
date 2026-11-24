@@ -86,6 +86,6 @@ for name in ("www/index.html", "www/game.html"):
         continue
     if "</head>" not in src:
         raise SystemExit(f"Missing </head> in {name}")
-    src = src.replace("</head>", '<style id="qh-design-pass-115">\\n' + css + '\\n</style>\\n</head>', 1)
+    src = src.replace("</head>", '<style id="qh-design-pass-115">' + css + '</style></head>', 1)
     path.write_text(src, encoding="utf-8")
 print("QH Design Pass 115 applied.")
