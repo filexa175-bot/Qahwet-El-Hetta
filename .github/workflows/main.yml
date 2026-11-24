@@ -108,7 +108,8 @@ jobs:
           python3 ../scripts/patch-design-pass-110.py
           grep -Fq 'QH DESIGN PASS 110' www/index.html
           grep -Fq 'QH DESIGN PASS 110' www/game.html
-          grep -Fq 'qh-hero-ornament' ../scripts/player-home-screen.html.txt
+          grep -Fq 'qh-brand-emblem' ../scripts/player-home-screen.html.txt
+          grep -Fq 'qahwet-emblem.webp' ../scripts/player-home-screen.html.txt
           grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
           echo "Build 110 identity, background, and onboarding controls verified."
 
