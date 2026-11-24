@@ -59,6 +59,17 @@ jobs:
           grep -Fq 'QH DESIGN PASS 106' www/game.html
           echo "Build 106 visual design markers verified."
 
+      - name: Apply warm café redesign and onboarding navigation fix 107
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-107.py
+          python3 ../scripts/patch-design-pass-107.py
+          grep -Fq 'QH DESIGN PASS 107' www/index.html
+          grep -Fq 'position:fixed!important' www/index.html
+          grep -Fq 'QH DESIGN PASS 107' www/game.html
+          grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
+          echo "Build 107 warm café identity and onboarding CTA verified."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
