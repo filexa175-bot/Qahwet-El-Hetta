@@ -52,6 +52,20 @@ jobs:
           test -s www/assets/qahwet-emblem.webp
           echo "Original Qahwet El Hetta transparent emblem installed."
 
+      - name: Decode and validate transparent brand emblem
+        run: |
+          python3 -m pip install --quiet Pillow
+          python3 - <<'PY'
+          from PIL import Image
+          p='assets/qahwet-emblem.webp'
+          im=Image.open(p)
+          im.verify()
+          im=Image.open(p).convert('RGBA')
+          assert im.width >= 150 and im.height >= 150, im.size
+          assert im.getchannel('A').getextrema()[0] == 0, 'transparent background expected'
+          print(f'Validated emblem: {im.size[0]}x{im.size[1]}, transparent RGBA')
+          PY
+
       - name: Validate and apply player profile and home screen update
         working-directory: app-source
         run: |
@@ -123,6 +137,17 @@ jobs:
           grep -Fq 'qh-profile-actions' ../scripts/player-home-screen.html.txt
           grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
           echo "Build 111 onboarding actions and compact emblem verified."
+
+      - name: Apply compact emblem presentation and strict logo checks 113
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-113.py
+          python3 ../scripts/patch-design-pass-113.py
+          grep -Fq 'QH DESIGN PASS 113' www/index.html
+          grep -Fq 'QH DESIGN PASS 113' www/game.html
+          grep -Fq 'assets/qahwet-emblem.webp' ../scripts/player-home-screen.html.txt
+          grep -Fq 'qh-brand-emblem' www/index.html
+          echo "Build 113 emblem layout and navigation-safe presentation verified."
 
       - name: Apply Android WebView scrolling and resilient logo fix 112
         working-directory: app-source
