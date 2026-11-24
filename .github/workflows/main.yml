@@ -81,7 +81,6 @@ jobs:
           grep -Fq 'qh-hero' www/index.html
           grep -Fq 'qh-dev-kicker' ../scripts/player-home-screen.html.txt
           grep -Fq 'Filexawy' ../scripts/player-home-screen.html.txt
-          grep -Fq 'QH DESIGN PASS 106' www/game.html
           echo "Build 106 visual design markers verified."
 
       - name: Apply warm café redesign and onboarding navigation fix 107
@@ -193,6 +192,16 @@ jobs:
           grep -Fq 'Powered by' ../scripts/player-home-screen.html.txt
           grep -Fq 'Filexawy' ../scripts/player-home-screen.html.txt
           echo "Build 115 ornamental logo plaque and Powered by Filexawy signature verified."
+
+      - name: Apply final ornamental plaque and developer signature refinement 116
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-116.py
+          python3 ../scripts/patch-design-pass-116.py
+          grep -Fq 'QH DESIGN PASS 116' www/index.html
+          grep -Fq 'QH DESIGN PASS 116' www/game.html
+          grep -Fq 'Powered by</span><b>Filexawy</b>' ../scripts/player-home-screen.html.txt
+          echo "Build 116 ornamental plaque and developer signature verified."
 
       - name: Inspect extracted application source
         working-directory: app-source
