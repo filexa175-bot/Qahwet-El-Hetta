@@ -81,6 +81,16 @@ jobs:
           grep -Fq 'QH DESIGN PASS 108' www/game.html
           echo "Build 108 scroll-safe layout and identity separation verified."
 
+      - name: Apply Qahwet El Hetta emblem-inspired identity 109
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-109.py
+          python3 ../scripts/patch-design-pass-109.py
+          grep -Fq 'QH DESIGN PASS 109' www/index.html
+          grep -Fq 'QH DESIGN PASS 109' www/game.html
+          grep -Fq -- '--qh-teal:#123f49' www/index.html
+          echo "Build 109 emblem-inspired palette verified."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
