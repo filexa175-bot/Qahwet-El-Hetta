@@ -124,6 +124,18 @@ jobs:
           grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
           echo "Build 111 onboarding actions and compact emblem verified."
 
+      - name: Apply Android WebView scrolling and resilient logo fix 112
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-112.py
+          python3 ../scripts/patch-design-pass-112.py
+          grep -Fq 'QH DESIGN PASS 112' www/index.html
+          grep -Fq 'QH DESIGN PASS 112' www/game.html
+          grep -Fq 'qh-emblem-fallback' ../scripts/player-home-screen.html.txt
+          grep -Fq 'overflow-y:auto!important' www/index.html
+          grep -Fq 'position:relative!important' www/index.html
+          echo "Build 112 Android WebView scrolling and logo fallback verified."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
