@@ -113,6 +113,17 @@ jobs:
           grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
           echo "Build 110 identity, background, and onboarding controls verified."
 
+      - name: Apply onboarding usability and compact emblem refinement 111
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-111.py
+          python3 ../scripts/patch-design-pass-111.py
+          grep -Fq 'QH DESIGN PASS 111' www/index.html
+          grep -Fq 'QH DESIGN PASS 111' www/game.html
+          grep -Fq 'qh-profile-actions' ../scripts/player-home-screen.html.txt
+          grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
+          echo "Build 111 onboarding actions and compact emblem verified."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
