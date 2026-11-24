@@ -214,6 +214,17 @@ jobs:
           grep -Fq 'assets/qahwet-emblem.webp' ../scripts/player-home-screen.html.txt
           echo "Build 117 ornamental identity and developer signature verified."
 
+      - name: Apply controlled ornamental plaque refinement 118
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-118.py
+          python3 ../scripts/patch-design-pass-118.py
+          grep -Fq 'QH DESIGN PASS 118' www/index.html
+          grep -Fq 'QH DESIGN PASS 118' www/game.html
+          grep -Fq 'width:min(39vw,142px)' www/index.html
+          grep -Fq 'Powered by</span><b>Filexawy</b>' ../scripts/player-home-screen.html.txt
+          echo "Build 118 bounded ornamental plaque and compact emblem verified."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
