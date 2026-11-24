@@ -64,10 +64,10 @@ css = r"""
   border:0!important;box-shadow:none!important;text-align:center!important;
   font-family:inherit!important
 }
-.qh-footer:before{content:"Powered by"!important;display:inline!important;
+.qh-footer:before{content:none!important;display:none!important;
   color:#8b7256!important;font-size:10px!important;font-weight:700!important;
   letter-spacing:.25px!important}
-.qh-footer .qh-dev-kicker,.qh-footer i,.qh-footer small{display:none!important}
+.qh-footer .qh-dev-kicker{display:inline!important;color:#8b7256!important;font-size:10px!important;font-weight:700!important;letter-spacing:.25px!important}\n.qh-footer i,.qh-footer small{display:none!important}
 .qh-footer b{display:inline!important;color:#17434a!important;
   font-size:12px!important;font-weight:900!important;letter-spacing:.2px!important}
 @media(max-width:390px){
