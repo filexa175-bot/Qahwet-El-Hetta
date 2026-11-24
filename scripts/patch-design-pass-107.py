@@ -118,7 +118,8 @@ for name in ("www/index.html", "www/game.html"):
     path = Path(name)
     src = path.read_text(encoding="utf-8")
     if "QH DESIGN PASS 107" in src:
-        raise SystemExit(f"Build 107 already applied in {name}")
+        print(f"Build 107 already applied in {name}; skipping.")
+        continue
     if "</head>" not in src:
         raise SystemExit(f"Missing </head> in {name}")
     src = src.replace("</head>", '<style id="qh-design-pass-107">\n' + css + '\n</style>\n</head>', 1)
