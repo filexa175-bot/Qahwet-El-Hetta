@@ -4,9 +4,8 @@ function startScreen(){
   if(S.mode!=='ai') S.mode='ai'; // Keep first-time play flow on the currently available offline mode.
   $('app').innerHTML=`<div class="start neo-home qh-experience">
     <header class="hero qh-hero">
-      <div class="qh-hero-copy"><span class="qh-eyebrow">أهلاً بيك في قعدتنا</span><h1>قهوة الحتة</h1><p>${step===1?'كل قعدة حلوة بتبدأ بالتعارف':'اختار قعدتك واللعبة اللي على مزاجك'}</p></div>
-      <div class="qh-hero-seal"><span>من قلب</span><b>الحارة</b><small>EST. 2026</small></div>
-      <div class="qh-hero-rule"><i></i><span>•</span><i></i></div>
+      <div class="qh-hero-copy"><span class="qh-eyebrow">أهلاً بيك في قهوتك</span><h1>قهوة الحتة</h1><p>${step===1?'لعبة مصرية أصيلة.. واللَمّة ليها حكاية':'اختار قعدتك واللعبة اللي على مزاجك'}</p></div>
+      <div class="qh-hero-ornament" aria-hidden="true"><span></span><i></i><span></span></div>
     </header>
     <nav class="qh-stepper" aria-label="خطوات بدء اللعب"><div class="${step===1?'active':''}"><b>01</b><span>بيانات اللاعب</span></div><i></i><div class="${step===2?'active':''}"><b>02</b><span>اختيار القعدة</span></div></nav>
     ${step===1?`<section class="qh-panel qh-profile-panel">
