@@ -42,6 +42,16 @@ jobs:
           mkdir app-source
           unzip -q "$SOURCE_ZIP" -d app-source
 
+      - name: Install original transparent brand emblem
+        working-directory: app-source
+        run: |
+          test -s ../assets/qahwet-emblem.webp
+          mkdir -p www/assets
+          cp ../assets/qahwet-emblem.webp www/assets/qahwet-emblem.webp
+          file www/assets/qahwet-emblem.webp
+          test -s www/assets/qahwet-emblem.webp
+          echo "Original Qahwet El Hetta transparent emblem installed."
+
       - name: Validate and apply player profile and home screen update
         working-directory: app-source
         run: |
@@ -194,6 +204,15 @@ jobs:
         run: |
           set -euo pipefail
           for APK in app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/release/app-release.apk; do
+            LOGO_ENTRY=$(unzip -Z1 "$APK" | grep -F 'assets/qahwet-emblem.webp' | head -n 1 || true)
+            if [ -z "$LOGO_ENTRY" ]; then
+              echo "Original Qahwet El Hetta emblem missing from $APK"
+              exit 1
+            fi
+            unzip -p "$APK" "$LOGO_ENTRY" > "$RUNNER_TEMP/qh-emblem-check.webp"
+            file "$RUNNER_TEMP/qh-emblem-check.webp"
+            test -s "$RUNNER_TEMP/qh-emblem-check.webp"
+            echo "Verified original emblem asset inside $APK at $LOGO_ENTRY"
             test -s "$APK"
             ENTRY=$(unzip -Z1 "$APK" | grep -F 'firebase-auth.js' | head -n 1 || true)
             if [ -z "$ENTRY" ]; then
