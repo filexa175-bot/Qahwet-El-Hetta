@@ -178,6 +178,17 @@ body{
 .wait{background:var(--qh-cream)!important;color:var(--qh-ink)!important;border-color:var(--qh-copper)!important}
 .wm{color:var(--qh-gold-soft)!important;opacity:.85}
 
+.qh-brand-emblem{
+ display:block!important;width:min(64vw,174px)!important;height:auto!important;
+ max-height:174px!important;object-fit:contain!important;margin:0 auto 8px!important;
+ filter:drop-shadow(0 7px 9px rgba(0,0,0,.22))!important
+}
+.qh-hero{min-height:0!important;padding:13px 16px 17px!important;gap:0!important}
+.qh-hero:before{inset:7px!important}
+.qh-hero-copy{margin:0!important}
+.qh-hero-copy .qh-eyebrow{font-size:11px!important;letter-spacing:.15px!important}
+.qh-hero-copy p{margin:3px 0 0!important;color:#f0d8b2!important;font-size:12px!important}
+.qh-hero-ornament{display:none!important}
 @media(max-width:390px){
  .start.neo-home.qh-experience{padding-left:14px!important;padding-right:14px!important}
  .qh-hero{min-height:155px!important;padding:20px 15px 22px!important;border-radius:18px!important}
