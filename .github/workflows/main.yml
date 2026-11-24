@@ -70,6 +70,16 @@ jobs:
           grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
           echo "Build 107 warm café identity and onboarding CTA verified."
 
+      - name: Apply editorial layout and natural scrolling redesign 108
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-108.py
+          python3 ../scripts/patch-design-pass-108.py
+          grep -Fq 'QH DESIGN PASS 108' www/index.html
+          grep -Fq 'position:static!important' www/index.html
+          grep -Fq 'QH DESIGN PASS 108' www/game.html
+          echo "Build 108 scroll-safe layout and identity separation verified."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
