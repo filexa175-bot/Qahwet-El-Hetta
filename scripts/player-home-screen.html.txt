@@ -4,7 +4,7 @@ function startScreen(){
   if(S.mode!=='ai') S.mode='ai'; // Keep first-time play flow on the currently available offline mode.
   $('app').innerHTML=`<div class="start neo-home qh-experience">
     <header class="hero qh-hero">
-      <img class="qh-brand-emblem" src="assets/qahwet-emblem.webp" alt="شعار قهوة الحتة" width="160" height="160" fetchpriority="high">
+      <img class="qh-brand-emblem" src="assets/qahwet-emblem.webp" alt="شعار قهوة الحتة" width="256" height="252" fetchpriority="high" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="qh-emblem-fallback" aria-label="قهوة الحتة"><strong>قهوة الحتة</strong><span>☕</span><small>لعبة مصرية أصيلة</small></div>
       <div class="qh-hero-copy"><span class="qh-eyebrow">أهلاً بيك في قهوتك</span><p>${step===1?'لعبة مصرية أصيلة.. واللَمّة ليها حكاية':'اختار قعدتك واللعبة اللي على مزاجك'}</p></div>
     </header>
     <nav class="qh-stepper" aria-label="خطوات بدء اللعب"><div class="${step===1?'active':''}"><b>01</b><span>بيانات اللاعب</span></div><i></i><div class="${step===2?'active':''}"><b>02</b><span>اختيار القعدة</span></div></nav>
