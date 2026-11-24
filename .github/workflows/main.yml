@@ -172,6 +172,16 @@ jobs:
           grep -Fq 'qh-brand-emblem' ../scripts/player-home-screen.html.txt
           echo "Build 114 logo-only framing and transparent hero verified."
 
+      - name: Apply frameless logo-only hero refinement 114
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-114.py
+          python3 ../scripts/patch-design-pass-114.py
+          grep -Fq 'QH DESIGN PASS 114' www/index.html
+          grep -Fq 'QH DESIGN PASS 114' www/game.html
+          grep -Fq 'qh-hero background removed' www/index.html
+          echo "Build 114: hero panel removed; emblem alone receives subtle outline/shadow."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |

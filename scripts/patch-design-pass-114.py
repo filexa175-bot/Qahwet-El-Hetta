@@ -1,48 +1,52 @@
 from pathlib import Path
 
 css = r"""
-/* QH DESIGN PASS 114 — transparent hero; visual outline hugs the emblem only */
+/* QH DESIGN PASS 114 — let the emblem stand alone */
 .qh-hero{
   display:flex!important;flex-direction:column!important;
   align-items:center!important;justify-content:center!important;
-  gap:7px!important;width:100%!important;height:auto!important;
-  min-height:0!important;max-height:none!important;box-sizing:border-box!important;
-  margin:0 0 17px!important;padding:8px 0 10px!important;
+  gap:5px!important;
+  width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;
+  box-sizing:border-box!important;
+  margin:0 0 13px!important;padding:7px 0 9px!important;
   border:0!important;border-radius:0!important;
-  background:transparent!important;box-shadow:none!important;
   overflow:visible!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  position:relative!important;
 }
 .qh-hero:before,.qh-hero:after{display:none!important;content:none!important}
 .qh-brand-emblem{
   display:block!important;position:relative!important;z-index:1!important;
-  width:min(42vw,156px)!important;height:auto!important;
-  max-width:156px!important;max-height:156px!important;
+  width:min(39vw,146px)!important;height:auto!important;
+  max-width:146px!important;max-height:146px!important;
   aspect-ratio:1/1!important;object-fit:contain!important;
-  margin:0 auto!important;padding:0!important;border:0!important;
-  border-radius:0!important;background:transparent!important;box-shadow:none!important;
-  filter:drop-shadow(0 0 1px rgba(246,235,211,.95))
-         drop-shadow(0 0 2px rgba(201,154,80,.78))!important;
+  margin:0 auto!important;padding:0!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  filter:drop-shadow(0 0 1.5px #d5a85e) drop-shadow(0 4px 5px rgba(13,48,55,.22))!important;
   image-rendering:auto!important;
 }
 .qh-emblem-fallback{display:none!important}
 .qh-hero-copy{
   position:relative!important;z-index:1!important;
   display:flex!important;flex-direction:column!important;align-items:center!important;
-  gap:3px!important;max-width:100%!important;margin:0!important;padding:0!important;
+  gap:2px!important;max-width:100%!important;margin:0!important;padding:0!important;
   text-align:center!important;
 }
 .qh-hero-copy .qh-eyebrow{
-  color:#123f49!important;font-size:13px!important;line-height:1.4!important;
+  color:#0d3942!important;font-size:12px!important;line-height:1.4!important;
   font-weight:800!important;letter-spacing:0!important
 }
 .qh-hero-copy p{
-  margin:0!important;color:#88745a!important;font-size:11px!important;
+  margin:0!important;color:#8b6745!important;font-size:11px!important;
   line-height:1.5!important;font-weight:600!important
 }
 @media(max-width:390px){
- .qh-hero{padding:6px 0 9px!important;gap:5px!important}
- .qh-brand-emblem{width:min(40vw,138px)!important;max-width:138px!important}
+ .qh-hero{padding:5px 0 8px!important;gap:4px!important}
+ .qh-brand-emblem{width:min(37vw,132px)!important;max-width:132px!important}
 }
+/* qh-hero background removed */
 """
 for name in ("www/index.html", "www/game.html"):
     path = Path(name)
