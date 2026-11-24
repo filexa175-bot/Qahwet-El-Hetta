@@ -3,10 +3,6 @@ function startScreen(){
   const step=S.profileStep||1;
   if(S.mode!=='ai') S.mode='ai'; // Keep first-time play flow on the currently available offline mode.
   $('app').innerHTML=`<div class="start neo-home qh-experience">
-    <div class="qh-topline"><div class="qh-brand-sign" aria-label="قهوة الحتة">
-      <svg class="qh-sign-art" viewBox="0 0 88 76" role="img" aria-label="علامة قهوة الحتة"><path d="M13 29Q44 -1 75 29" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M17 30H71L66 41H22Z" fill="#b8894d" stroke="currentColor" stroke-width="1.5"/><path d="M22 30L28 41M34 30L37 41M47 30L46 41M59 30L55 41M70 30L64 41" stroke="#f1dfbd" stroke-width="2"/><path d="M24 43H64V65H24Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M31 51H57M31 57H57" stroke="currentColor" stroke-width="1.5"/><circle cx="44" cy="51" r="3" fill="#b8894d"/></svg>
-      <span class="qh-sign-ar">قهوة الحتة</span><span class="qh-sign-sub">اللَمّة ليها حكاية</span>
-    </div><div class="qh-powered"><span>CRAFTED BY</span><b>Filexawy</b><i>GAME STUDIO</i></div></div>
     <header class="hero qh-hero">
       <div class="qh-hero-copy"><span class="qh-eyebrow">أهلاً بيك في قعدتنا</span><h1>قهوة الحتة</h1><p>${step===1?'كل قعدة حلوة بتبدأ بالتعارف':'اختار قعدتك واللعبة اللي على مزاجك'}</p></div>
       <div class="qh-hero-seal"><span>من قلب</span><b>الحارة</b><small>EST. 2026</small></div>
@@ -16,7 +12,7 @@ function startScreen(){
     ${step===1?`<section class="qh-panel qh-profile-panel">
       <div class="qh-section-title"><div class="qh-index">01</div><div><h3>خلّينا نتعرّف عليك</h3><p>جهّز هويتك قبل ما تدخل القهوة</p></div><span class="qh-section-tag">PLAYER PROFILE</span></div>
       <label class="qh-field-label" for="qh-player-name">اسمك اللي هتظهر بيه</label>
-      <div class="qh-input-wrap"><span class="qh-input-icon">✦</span><input id="qh-player-name" class="name-input qh-name-input" maxlength="18" value="${esc(S.playerName)}" placeholder="اكتب اسم اللاعب..." oninput="S.playerName=this.value;persist()"></div>
+      <div class="qh-input-wrap"><input id="qh-player-name" class="name-input qh-name-input" maxlength="18" value="${esc(S.playerName)}" placeholder="اكتب اسم اللاعب..." oninput="S.playerName=this.value;persist()"></div>
       <div class="qh-id-row"><div><small>PLAYER ID</small><b>${esc(S.playerId||"لسه مش مربوط بحساب")}</b></div><button class="qh-copy-id" onclick="copyPlayerId()">نسخ المعرف <span>↗</span></button></div>
       ${S.authenticated?`<div class="qh-account-state"><span>✓</span><div><b>حسابك متصل</b><small>بياناتك جاهزة للحفظ والمزامنة</small></div></div>`:`<button class="qh-google-login" onclick="QHAuth?.signIn()"><span class="qh-google-g">G</span><span><b>المتابعة باستخدام Google</b><small>اربط حسابك واحفظ تقدمك</small></span><i>←</i></button><p class="qh-login-note">تقدر تكمل إعدادك، وربط الحساب يساعدك تحتفظ ببياناتك.</p>`}
       <div class="qh-character-head"><div><h3>اختار الشخصية اللي تمثّلك</h3><p>دي صورتك وسط أهل القهوة</p></div><span>02</span></div>
@@ -28,6 +24,6 @@ function startScreen(){
       ${S.mode==='random'||S.mode==='friend'?'<section class="qh-panel qh-stake-section"><div class="qh-section-title"><div class="qh-index">03</div><div><h3>قيمة المباراة</h3><p>نفس قيمة الماركات لكل لاعب</p></div></div><div class="qh-stake-grid">'+[50,100,500,1000].map(v=>'<button class="opt qh-stake-opt '+((S.stake||50)===v?'on':'')+'" onclick="S.stake='+v+';persist();startScreen()"><b>'+v+'</b><small>ماركة</small></button>').join('')+'</div><div class="qh-stake-summary">إجمالي الماركات في المباراة: <b>'+(S.stake||50)*2+'</b></div></section>':''}
       ${S.mode==='ai'?'<section class="qh-panel qh-difficulty-panel"><div class="qh-section-title"><div class="qh-index">03</div><div><h3>مستوى التحدي</h3><p>اختار درجة صعوبة المنافس</p></div></div><div class="g4 difficulty-grid">'+DF.map((d,i)=>'<button class="opt difficulty-opt '+(S.df==i?'on':'')+'" onclick="S.df='+i+';persist();startScreen()"><b>'+d[2]+'</b><strong>'+d[0]+'</strong><small>'+d[1]+'</small></button>').join('')+'</div></section>':''}
       <div class="qh-bottom-actions qh-two-actions"><button class="sec qh-back" onclick="S.profileStep=1;persist();startScreen()">رجوع</button><button class="pri qh-primary" onclick="S.mode==='ai'?go():showToast('الخيار ده هيتفعل مع تحديث اللعب أونلاين')">ادخل القعدة <span>←</span></button></div>`}
-      <footer class="qh-footer"><span>قهوة الحتة</span><i></i><b>Powered by Filexawy</b><small>MADE WITH CARE</small></footer>
+      <footer class="qh-footer"><span class="qh-dev-kicker">CRAFTED BY</span><b>Filexawy</b><i></i><small>GAME STUDIO</small></footer>
     </div>${S.set?setSheet():''}`;
 }
