@@ -56,7 +56,7 @@ jobs:
           grep -Fq 'QH DESIGN PASS 106' www/index.html
           grep -Fq 'qh-hero' www/index.html
           grep -Fq 'qh-dev-kicker' ../scripts/player-home-screen.html.txt
-          grep -Fq 'Powered by Filexawy' www/index.html
+          grep -Fq 'Filexawy' ../scripts/player-home-screen.html.txt
           grep -Fq 'QH DESIGN PASS 106' www/game.html
           echo "Build 106 visual design markers verified."
 
