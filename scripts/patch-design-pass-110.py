@@ -159,6 +159,25 @@ body{
 .qh-footer .qh-dev-kicker,.qh-footer small{color:#9a856a!important}
 .qh-footer b{color:var(--qh-teal)!important}
 .qh-footer i{background:var(--qh-copper)!important}
+/* QH GAME SURFACES 110 — shared teal, parchment and brass material language */
+#app{max-width:620px!important;background:transparent!important;box-shadow:none!important}
+.top{background:linear-gradient(90deg,#0d333b,#1c5660 50%,#0d333b)!important;border-bottom:2px solid var(--qh-gold)!important}
+.bub{background:var(--qh-cream)!important;color:var(--qh-ink)!important;border:1px solid rgba(213,168,94,.6)!important}
+.ic,.sec,.bar button{background:linear-gradient(145deg,#174b54,#0d343c)!important;border:1px solid var(--qh-gold)!important;color:#fff0d5!important}
+.tb{background:radial-gradient(ellipse at center,#1b6268,#0c343d 78%)!important;border:4px solid #c89a58!important;box-shadow:inset 0 0 0 2px rgba(255,231,187,.38),0 7px 18px rgba(0,0,0,.22)!important}
+.table{background:repeating-linear-gradient(90deg,#174b54,#174b54 38px,#123f49 38px,#123f49 40px)!important;border:4px solid #c89a58!important;box-shadow:inset 0 0 0 2px rgba(255,231,187,.38),0 7px 18px rgba(0,0,0,.22)!important}
+.basra-zone{background:radial-gradient(ellipse at center,#22646a,#103b43 76%)!important;border:4px solid #c89a58!important;box-shadow:inset 0 0 0 2px rgba(255,231,187,.34),0 7px 18px rgba(0,0,0,.2)!important}
+.domino-board-shell{background:radial-gradient(ellipse at center,#1c5961,#103940 76%)!important;border:7px solid #b9874c!important;box-shadow:inset 0 0 0 2px #f0d49b, inset 0 0 28px rgba(4,24,28,.48),0 8px 20px rgba(0,0,0,.25)!important}
+.domino-board-shell:before,.backgammon-board:before{border-color:rgba(240,212,155,.55)!important}
+.backgammon-board{background:radial-gradient(ellipse at center,#174c58,#0d303a 76%)!important;border-color:#b9874c!important;box-shadow:inset 0 0 0 3px #e3c28e,inset 0 0 30px #050c17,0 7px 22px #0005!important}
+.backgammon-board .barr{background:linear-gradient(90deg,#0b3038,#1e5960,#0b3038)!important;border-color:#d6b27d!important}
+.score .team{background:linear-gradient(145deg,#174b54,#0c3038)!important;border-color:rgba(213,168,94,.8)!important}
+.card{background:linear-gradient(145deg,#174b54,#0d343c)!important;border:1px solid var(--qh-gold)!important;color:#fff1d8!important;box-shadow:0 8px 22px rgba(0,0,0,.2)!important}
+.playcard{border-color:#c79b5c!important;box-shadow:inset 0 0 0 2px #fff8,0 2px 0 #8b6336,0 5px 9px #0005!important}
+.bar button.pri,.pri{background:linear-gradient(135deg,#e3bf7d,#c38a4c)!important;color:#173941!important;border:1px solid #f0d49b!important;box-shadow:0 3px 0 #805b32!important}
+.wait{background:var(--qh-cream)!important;color:var(--qh-ink)!important;border-color:var(--qh-copper)!important}
+.wm{color:var(--qh-gold-soft)!important;opacity:.85}
+
 @media(max-width:390px){
  .start.neo-home.qh-experience{padding-left:14px!important;padding-right:14px!important}
  .qh-hero{min-height:155px!important;padding:20px 15px 22px!important;border-radius:18px!important}
