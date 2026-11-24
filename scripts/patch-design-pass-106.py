@@ -5,7 +5,8 @@ for name in ("www/index.html", "www/game.html"):
     path = Path(name)
     src = path.read_text(encoding="utf-8")
     if "QH DESIGN PASS 106" in src:
-        raise SystemExit(f"Design pass already present in {name}")
+        print(f"QH Design Pass 106 already present in {name}; skipping.")
+        continue
     if "</head>" not in src:
         raise SystemExit(f"Missing </head> in {name}")
     src = src.replace("</head>", '<style id="qh-design-pass-106">\n' + css + '\n</style>\n</head>', 1)
