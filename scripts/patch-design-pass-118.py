@@ -61,7 +61,7 @@ for name in ("www/index.html", "www/game.html"):
     html = re.sub(r'<style id="qh-design-pass-118">.*?</style>', '', html, flags=re.S)
     if "</head>" not in html:
         raise SystemExit(f"Missing </head> in {name}")
-    block = '<style id="qh-design-pass-118">\\n/* QH DESIGN PASS 118 */\\n' + css + '\\n</style>\\n</head>'
+    block = '<style id="qh-design-pass-118">\n/* QH DESIGN PASS 118 */\n' + css + '\n</style>\n</head>'
     html = html.replace("</head>", block, 1)
     path.write_text(html, encoding="utf-8")
 
