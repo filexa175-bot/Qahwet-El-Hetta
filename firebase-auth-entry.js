@@ -342,7 +342,7 @@ async function sendFriendRequest(playerId){
   const requestId=user.uid+"__"+target.uid;
   const ref=doc(db,"friendRequests",requestId);
   const old=await getDoc(ref);if(old.exists())throw new Error("فيه طلب صداقة موجود بالفعل");
-  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:window.QHProfile?.playerId||"",toPlayerId:target.playerId,status:"pending",createdAt:serverTimestamp()});
+  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:window.S?.playerId||"",toPlayerId:target.playerId,status:"pending",createdAt:serverTimestamp()});
   return target;
 }
 async function listFriendRequests(){
