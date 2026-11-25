@@ -52,11 +52,11 @@ jobs:
                           raise SystemExit(f"{name}: expected exactly one offending sequence, found {count}")
                       data = data.replace(target, replacement, 1)
                       # Remove the remaining literal backslash-n separator and its layout whitespace.
-                      separator = b"</script>\\n\\\\n<script>"
+                      separator = b"</script>\n\\n<script>"
                       if data.count(separator) != 1:
                           raise SystemExit(f"{name}: expected exactly one remaining visible newline marker, found {data.count(separator)}")
                       data = data.replace(separator, b"</script><script>", 1)
-                      if target in data or b"\\\\n" in data:
+                      if target in data or b"\\n" in data:
                           raise SystemExit(f"{name}: visible newline text remains")
                   info = zin.getinfo(name)
                   zout.writestr(info, data)
@@ -70,7 +70,7 @@ jobs:
               for name in ("assets/public/index.html", "assets/public/game.html"):
                   x, y = a.read(name), b.read(name)
                   expected = x.replace(target, replacement, 1)
-                  separator = b"</script>\\n\\\\n<script>"
+                  separator = b"</script>\n\\n<script>"
                   expected = expected.replace(separator, b"</script><script>", 1)
                   if expected != y:
                       raise SystemExit(f"Unexpected HTML change beyond the requested text fix: {name}")
@@ -136,7 +136,7 @@ jobs:
                   b=z.read(n)
                   assert b"</script>\\n</body>" not in b, n
                   assert b"</script>\n</body>" in b, n
-                  assert b"\\\\n" not in b, n
+                  assert b"\\n" not in b, n
                   assert b"</script><script>" in b, n
                   print(n, "clean; unwanted marker and separator removed")
           PY
