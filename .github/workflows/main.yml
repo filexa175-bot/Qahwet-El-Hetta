@@ -226,6 +226,17 @@ jobs:
           grep -Fq 'Powered by</span><b>Filexawy</b>' ../scripts/player-home-screen.html.txt
           echo "Build 118 bounded ornamental plaque and compact emblem verified."
 
+      - name: Add player friends panel and validate its JavaScript
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-multiplayer-friends.py
+          python3 ../scripts/patch-multiplayer-friends.py
+          grep -Fq 'qh-friends-panel' www/game.html
+          grep -Fq 'function qhRefreshFriends()' www/game.html
+          python3 -c "import re; s=open('www/game.html').read(); x=re.findall(r'<script>([\\s\\S]*?)</script>',s); open('/tmp/qh-game-inline.js','w').write(x[-1])"
+          node --check /tmp/qh-game-inline.js
+          echo "Friends UI markers and JavaScript syntax verified."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
