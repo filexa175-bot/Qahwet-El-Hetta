@@ -115,6 +115,34 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+
+    // Reciprocal friend records are written only when an accepted request exists after the transaction.
+    match /friends/{friendshipId} {
+      allow get, list: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.friendUid is string
+        && request.resource.data.friendUid != request.auth.uid
+        && request.resource.data.keys().hasOnly(['ownerUid','friendUid','friendPlayerId','createdAt'])
+        && request.resource.data.createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.friendUid + '__' + request.auth.uid))
+        && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.friendUid + '__' + request.auth.uid)).data.status == 'accepted';
+      allow update, delete: if false;
+    }
+
+    // Presence is visible only to the player and accepted friends.
+    match /presence/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid
+        || exists(/databases/$(database)/documents/friends/$(request.auth.uid + '__' + uid)));
+      allow list: if false;
+      allow create, update: if owns(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.online is bool
+        && request.resource.data.lastSeen == request.time
+        && request.resource.data.keys().hasOnly(['uid','online','lastSeen']);
+      allow delete: if false;
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }

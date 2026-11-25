@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider, signInWithCredential, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, collection, query, where, getDocs, updateDoc, onSnapshot } from 'firebase/firestore';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 const firebaseConfig = {
@@ -354,13 +354,62 @@ async function listFriendRequests(){
 async function respondFriendRequest(requestId,accept){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
  const ref=doc(db,"friendRequests",requestId);
- await runTransaction(db,async tx=>{const snap=await tx.get(ref);if(!snap.exists()||snap.data().toUid!==user.uid||snap.data().status!=="pending")throw new Error("طلب الصداقة غير متاح");tx.update(ref,{status:accept?"accepted":"declined",respondedAt:serverTimestamp()});});
+ await runTransaction(db,async tx=>{
+  const snap=await tx.get(ref);
+  if(!snap.exists()||snap.data().toUid!==user.uid||snap.data().status!=="pending")throw new Error("طلب الصداقة غير متاح");
+  const request=snap.data();
+  tx.update(ref,{status:accept?"accepted":"declined",respondedAt:serverTimestamp()});
+  if(accept){
+   const fromRef=doc(db,"friends",request.fromUid+"__"+request.toUid);
+   const toRef=doc(db,"friends",request.toUid+"__"+request.fromUid);
+   tx.set(fromRef,{ownerUid:request.fromUid,friendUid:request.toUid,friendPlayerId:request.toPlayerId,createdAt:serverTimestamp()});
+   tx.set(toRef,{ownerUid:request.toUid,friendUid:request.fromUid,friendPlayerId:request.fromPlayerId,createdAt:serverTimestamp()});
+  }
+ });
  return true;
 }
-window.QHFriends={findPlayerById,sendFriendRequest,listFriendRequests,respondFriendRequest};
+async function listFriends(){
+ const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
+ const snap=await getDocs(query(collection(db,"friends"),where("ownerUid","==",user.uid)));
+ const rows=await Promise.all(snap.docs.map(async x=>{
+  const f=x.data();const p=await getDoc(doc(db,"users",f.friendUid));
+  const profile=p.exists()?p.data():{};
+  const presence=await getDoc(doc(db,"presence",f.friendUid));
+  const online=presence.exists()&&presence.data().online===true&&presence.data().lastSeen?.toMillis?.()>(Date.now()-120000);
+  return {uid:f.friendUid,playerId:f.friendPlayerId||profile.playerId||"",displayName:profile.displayName||"لاعب",avatarIndex:profile.avatarIndex||0,online};
+ }));
+ return rows;
+}
+async function setMyPresence(online){
+ const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
+ await setDoc(doc(db,"presence",user.uid),{uid:user.uid,online:!!online,lastSeen:serverTimestamp()},{merge:true});
+}
+function watchFriendPresence(friendUids,onChange,onError){
+ const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
+ const ids=[...new Set((friendUids||[]).filter(x=>typeof x==="string"&&x!==user.uid))];
+ const stops=ids.map(uid=>onSnapshot(doc(db,"presence",uid),snap=>{
+  const d=snap.exists()?snap.data():{};
+  const online=d.online===true&&d.lastSeen?.toMillis?.()>(Date.now()-120000);
+  onChange?.(uid,online);
+ },err=>onError?.(err)));
+ return ()=>stops.forEach(stop=>stop());
+}
+let presenceTimer=null;
+function startPresence(){
+ if(!auth.currentUser||presenceTimer)return;
+ setMyPresence(true).catch(e=>console.warn("[QH PRESENCE]",e));
+ presenceTimer=setInterval(()=>setMyPresence(true).catch(e=>console.warn("[QH PRESENCE]",e)),60000);
+}
+function stopPresence(){
+ if(presenceTimer){clearInterval(presenceTimer);presenceTimer=null;}
+ if(auth.currentUser)setMyPresence(false).catch(e=>console.warn("[QH PRESENCE]",e));
+}
+window.addEventListener("pagehide",stopPresence);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")startPresence();else stopPresence();});
+window.QHFriends={findPlayerById,sendFriendRequest,listFriendRequests,respondFriendRequest,listFriends,setMyPresence,watchFriendPresence};
 
 window.QHAuth={signIn,updateProfile,signOut,restore,loadWallet,claimDailyGift,get currentUser(){return auth.currentUser;},get db(){return db;}};
 window.QHAuthReady=true;
 console.info("[QH AUTH] Firebase auth bundle initialized; native="+Capacitor.isNativePlatform());
-onAuthStateChanged(auth,user=>{if(user)restore().catch(e=>console.warn("QH auth state",e));});
+onAuthStateChanged(auth,user=>{if(user){restore().then(startPresence).catch(e=>console.warn("QH auth state",e));}else stopPresence();});
 window.addEventListener("DOMContentLoaded",()=>setTimeout(restore,300));
