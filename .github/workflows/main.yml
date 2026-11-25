@@ -2,6 +2,11 @@ name: Build Qahwet El Hetta APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/accounts-online-multiplayer
+      - fix/free-firestore-wallet
 
 permissions:
   contents: read
@@ -37,6 +42,189 @@ jobs:
           mkdir app-source
           unzip -q "$SOURCE_ZIP" -d app-source
 
+      - name: Install original transparent brand emblem
+        working-directory: app-source
+        run: |
+          test -s ../assets/qahwet-emblem.webp
+          mkdir -p www/assets
+          cp ../assets/qahwet-emblem.webp www/assets/qahwet-emblem.webp
+          file www/assets/qahwet-emblem.webp
+          test -s www/assets/qahwet-emblem.webp
+          echo "Original Qahwet El Hetta transparent emblem installed."
+
+      - name: Decode and validate transparent brand emblem
+        run: |
+          python3 -m pip install --quiet Pillow
+          python3 - <<'PY'
+          from PIL import Image
+          p='assets/qahwet-emblem.webp'
+          im=Image.open(p)
+          im.verify()
+          im=Image.open(p).convert('RGBA')
+          assert im.width >= 150 and im.height >= 150, im.size
+          assert im.getchannel('A').getextrema()[0] == 0, 'transparent background expected'
+          print(f'Validated emblem: {im.size[0]}x{im.size[1]}, transparent RGBA')
+          PY
+
+      - name: Validate and apply player profile and home screen update
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-player-profile.py
+          python3 ../scripts/patch-player-profile.py
+
+      - name: Apply unified visual design pass 106
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-106.py
+          python3 ../scripts/patch-design-pass-106.py
+          grep -Fq 'QH DESIGN PASS 106' www/index.html
+          grep -Fq 'qh-hero' www/index.html
+          grep -Fq 'qh-dev-kicker' ../scripts/player-home-screen.html.txt
+          grep -Fq 'Filexawy' ../scripts/player-home-screen.html.txt
+          echo "Build 106 visual design markers verified."
+
+      - name: Apply warm café redesign and onboarding navigation fix 107
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-107.py
+          python3 ../scripts/patch-design-pass-107.py
+          grep -Fq 'QH DESIGN PASS 107' www/index.html
+          grep -Fq 'position:fixed!important' www/index.html
+          grep -Fq 'QH DESIGN PASS 107' www/game.html
+          grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
+          echo "Build 107 warm café identity and onboarding CTA verified."
+
+      - name: Apply editorial layout and natural scrolling redesign 108
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-108.py
+          python3 ../scripts/patch-design-pass-108.py
+          grep -Fq 'QH DESIGN PASS 108' www/index.html
+          grep -Fq 'position:static!important' www/index.html
+          grep -Fq 'QH DESIGN PASS 108' www/game.html
+          echo "Build 108 scroll-safe layout and identity separation verified."
+
+      - name: Apply Qahwet El Hetta emblem-inspired identity 109
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-109.py
+          python3 ../scripts/patch-design-pass-109.py
+          grep -Fq 'QH DESIGN PASS 109' www/index.html
+          grep -Fq 'QH DESIGN PASS 109' www/game.html
+          grep -Fq -- '--qh-teal:#123f49' www/index.html
+          echo "Build 109 emblem-inspired palette verified."
+
+      - name: Apply final café identity refinement 110
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-110.py
+          python3 ../scripts/patch-design-pass-110.py
+          grep -Fq 'QH DESIGN PASS 110' www/index.html
+          grep -Fq 'QH DESIGN PASS 110' www/game.html
+          grep -Fq 'qh-brand-emblem' ../scripts/player-home-screen.html.txt
+          grep -Fq 'qahwet-emblem.webp' ../scripts/player-home-screen.html.txt
+          grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
+          echo "Build 110 identity, background, and onboarding controls verified."
+
+      - name: Apply onboarding usability and compact emblem refinement 111
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-111.py
+          python3 ../scripts/patch-design-pass-111.py
+          grep -Fq 'QH DESIGN PASS 111' www/index.html
+          grep -Fq 'QH DESIGN PASS 111' www/game.html
+          grep -Fq 'qh-profile-actions' ../scripts/player-home-screen.html.txt
+          grep -Fq 'التالي' ../scripts/player-home-screen.html.txt
+          echo "Build 111 onboarding actions and compact emblem verified."
+
+      - name: Apply compact emblem presentation and strict logo checks 113
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-113.py
+          python3 ../scripts/patch-design-pass-113.py
+          grep -Fq 'QH DESIGN PASS 113' www/index.html
+          grep -Fq 'QH DESIGN PASS 113' www/game.html
+          grep -Fq 'assets/qahwet-emblem.webp' ../scripts/player-home-screen.html.txt
+          grep -Fq 'qh-brand-emblem' www/index.html
+          echo "Build 113 emblem layout and navigation-safe presentation verified."
+
+      - name: Apply Android WebView scrolling and resilient logo fix 112
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-112.py
+          python3 ../scripts/patch-design-pass-112.py
+          grep -Fq 'QH DESIGN PASS 112' www/index.html
+          grep -Fq 'QH DESIGN PASS 112' www/game.html
+          grep -Fq 'qh-emblem-fallback' ../scripts/player-home-screen.html.txt
+          grep -Fq 'overflow-y:auto!important' www/index.html
+          grep -Fq 'position:relative!important' www/index.html
+          echo "Build 112 Android WebView scrolling and logo fallback verified."
+
+      - name: Remove oversized logo backdrop and frame only the emblem 114
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-114.py
+          python3 ../scripts/patch-design-pass-114.py
+          grep -Fq 'QH DESIGN PASS 114' www/index.html
+          grep -Fq 'QH DESIGN PASS 114' www/game.html
+          grep -Fq 'background:transparent!important' www/index.html
+          grep -Fq 'qh-brand-emblem' ../scripts/player-home-screen.html.txt
+          echo "Build 114 logo-only framing and transparent hero verified."
+
+      - name: Apply frameless logo-only hero refinement 114
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-114.py
+          python3 ../scripts/patch-design-pass-114.py
+          grep -Fq 'QH DESIGN PASS 114' www/index.html
+          grep -Fq 'QH DESIGN PASS 114' www/game.html
+          grep -Fq 'qh-hero background removed' www/index.html
+          echo "Build 114: hero panel removed; emblem alone receives subtle outline/shadow."
+
+
+      - name: Apply ornamental café identity and correct developer signature 115
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-115.py
+          python3 ../scripts/patch-design-pass-115.py
+          grep -Fq 'QH DESIGN PASS 115' www/index.html
+          grep -Fq 'QH DESIGN PASS 115' www/game.html
+          grep -Fq 'Powered by' ../scripts/player-home-screen.html.txt
+          grep -Fq 'Filexawy' ../scripts/player-home-screen.html.txt
+          echo "Build 115 ornamental logo plaque and Powered by Filexawy signature verified."
+
+      - name: Apply final ornamental plaque and developer signature refinement 116
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-116.py
+          python3 ../scripts/patch-design-pass-116.py
+          grep -Fq 'QH DESIGN PASS 116' www/index.html
+          grep -Fq 'QH DESIGN PASS 116' www/game.html
+          grep -Fq 'Powered by</span><b>Filexawy</b>' ../scripts/player-home-screen.html.txt
+          echo "Build 116 ornamental plaque and developer signature verified."
+
+      - name: Apply refined ornamental identity and exact Filexawy signature 117
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-117.py
+          python3 ../scripts/patch-design-pass-117.py
+          grep -Fq 'QH DESIGN PASS 117' www/index.html
+          grep -Fq 'QH DESIGN PASS 117' www/game.html
+          grep -Fq 'Powered by</span><b>Filexawy</b>' ../scripts/player-home-screen.html.txt
+          grep -Fq 'assets/qahwet-emblem.webp' ../scripts/player-home-screen.html.txt
+          echo "Build 117 ornamental identity and developer signature verified."
+
+      - name: Apply controlled ornamental plaque refinement 118
+        working-directory: app-source
+        run: |
+          python3 -m py_compile ../scripts/patch-design-pass-118.py
+          python3 ../scripts/patch-design-pass-118.py
+          grep -Fq 'QH DESIGN PASS 118' www/index.html
+          grep -Fq 'QH DESIGN PASS 118' www/game.html
+          grep -Fq 'width:min(39vw,142px)' www/index.html
+          grep -Fq 'Powered by</span><b>Filexawy</b>' ../scripts/player-home-screen.html.txt
+          echo "Build 118 bounded ornamental plaque and compact emblem verified."
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
@@ -65,14 +253,28 @@ jobs:
         run: python3 ../scripts/patch-background-music.py
         working-directory: app-source
 
-      - name: Install dependencies
+      - name: Add dismissible system messages
+        run: python3 ../scripts/patch-dismissible-system-messages.py
         working-directory: app-source
-        run: npm install
+
+      - name: Install dependencies and bundle Firebase auth
+        working-directory: app-source
+        run: |
+          python3 ../scripts/patch-firebase-auth.py
+          npm install
+          cp ../firebase-auth-entry.js ./firebase-auth-entry.js
+          python3 ../scripts/patch-firebase-auth-diagnostic.py
+          npx esbuild ./firebase-auth-entry.js --bundle --platform=browser --format=iife --outfile=www/firebase-auth.js
+          echo "=== VERIFY FIREBASE DIAGNOSTIC BUNDLE ==="
+          grep -Fq 'QH-DIAG-20261123-C' www/firebase-auth.js
+          grep -Fq 'project=' www/firebase-auth.js
+          echo "Diagnostic marker confirmed in bundled web asset."
 
       - name: Prepare Android project
         working-directory: app-source
         run: |
           npx cap add android
+          python3 ../scripts/prepare-firebase-native.py
           npx cap sync android
           unzip -o -q ../android-icons.zip -d android/app/src/main/res/
           cp ../google-services.json android/app/google-services.json
@@ -98,6 +300,44 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug assembleRelease
+
+      - name: Verify release signing certificate matches Firebase OAuth config
+        working-directory: app-source/android
+        run: |
+          set -euo pipefail
+          EXPECTED_SHA1=$(python3 -c "import json; d=json.load(open('../../google-services.json')); c=d['client'][0]['oauth_client']; print(next(x['android_info']['certificate_hash'] for x in c if x.get('client_type') == 1).replace(':','').upper())")
+          ACTUAL_SHA1=$(keytool -printcert -jarfile app/build/outputs/apk/release/app-release.apk | sed -n 's/.*SHA1: //p' | head -n 1 | tr -d ' :' | tr '[:lower:]' '[:upper:]')
+          echo "Firebase Android OAuth SHA-1: $EXPECTED_SHA1"
+          echo "Release APK signing SHA-1:    $ACTUAL_SHA1"
+          test -n "$EXPECTED_SHA1" && test "$EXPECTED_SHA1" = "$ACTUAL_SHA1"
+          echo "Release signing certificate matches Firebase OAuth configuration."
+
+      - name: Verify diagnostic marker inside final APKs
+        working-directory: app-source/android
+        run: |
+          set -euo pipefail
+          for APK in app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/release/app-release.apk; do
+            LOGO_ENTRY=$(unzip -Z1 "$APK" | grep -F 'assets/qahwet-emblem.webp' | head -n 1 || true)
+            if [ -z "$LOGO_ENTRY" ]; then
+              echo "Original Qahwet El Hetta emblem missing from $APK"
+              exit 1
+            fi
+            unzip -p "$APK" "$LOGO_ENTRY" > "$RUNNER_TEMP/qh-emblem-check.webp"
+            file "$RUNNER_TEMP/qh-emblem-check.webp"
+            test -s "$RUNNER_TEMP/qh-emblem-check.webp"
+            echo "Verified original emblem asset inside $APK at $LOGO_ENTRY"
+            test -s "$APK"
+            ENTRY=$(unzip -Z1 "$APK" | grep -F 'firebase-auth.js' | head -n 1 || true)
+            if [ -z "$ENTRY" ]; then
+              echo "firebase-auth.js was not found inside $APK"
+              exit 1
+            fi
+            if ! unzip -p "$APK" "$ENTRY" | grep -Fq 'QH-DIAG-20261123-C'; then
+              echo "Diagnostic marker is missing from $APK ($ENTRY)"
+              exit 1
+            fi
+            echo "Verified QH-DIAG-20261123-C inside $APK at $ENTRY"
+          done
 
       - name: Upload debug APK (backup)
         uses: actions/upload-artifact@v4
