@@ -287,6 +287,18 @@ jobs:
           npm install
           cp ../firebase-auth-entry.js ./firebase-auth-entry.js
           python3 ../scripts/patch-firebase-auth-diagnostic.py
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ("www/index.html", "www/game.html"):
+              p = Path(name)
+              s = p.read_text(encoding="utf-8")
+              # The defect is two literal characters (backslash + n), not a newline.
+              s = s.replace("\\n<script>", "<script>")
+              if "\\n<script>" in s:
+                  raise SystemExit(f"Literal backslash-n remains in {name}")
+              p.write_text(s, encoding="utf-8")
+              print(f"Verified clean script boundary: {name}")
+          PY
           npx esbuild ./firebase-auth-entry.js --bundle --platform=browser --format=iife --outfile=www/firebase-auth.js
           echo "=== VERIFY FIREBASE DIAGNOSTIC BUNDLE ==="
           grep -Fq 'QH-DIAG-20261123-C' www/firebase-auth.js
