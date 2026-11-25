@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider, signInWithCredential, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, collection, query, where, getDocs, updateDoc, onSnapshot } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 const firebaseConfig = {
@@ -17,6 +18,7 @@ let auth;
 try { auth=Capacitor.isNativePlatform()?initializeAuth(app,{persistence:indexedDBLocalPersistence}):getAuth(app); }
 catch(e){ auth=getAuth(app); }
 const db=getFirestore(app);
+const functions=getFunctions(app, 'us-central1');
 const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function makeId(){let out="";for(let i=0;i<8;i++)out+=alphabet[Math.floor(Math.random()*alphabet.length)];return out;}
 function cleanName(v){return String(v||"").trim().replace(/[<>]/g,"").slice(0,18);}
@@ -353,20 +355,9 @@ async function listFriendRequests(){
 }
 async function respondFriendRequest(requestId,accept){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
- const ref=doc(db,"friendRequests",requestId);
- await runTransaction(db,async tx=>{
-  const snap=await tx.get(ref);
-  if(!snap.exists()||snap.data().toUid!==user.uid||snap.data().status!=="pending")throw new Error("طلب الصداقة غير متاح");
-  const request=snap.data();
-  tx.update(ref,{status:accept?"accepted":"declined",respondedAt:serverTimestamp()});
-  if(accept){
-   const fromRef=doc(db,"friends",request.fromUid+"__"+request.toUid);
-   const toRef=doc(db,"friends",request.toUid+"__"+request.fromUid);
-   tx.set(fromRef,{ownerUid:request.fromUid,friendUid:request.toUid,friendPlayerId:request.toPlayerId,createdAt:serverTimestamp()});
-   tx.set(toRef,{ownerUid:request.toUid,friendUid:request.fromUid,friendPlayerId:request.fromPlayerId,createdAt:serverTimestamp()});
-  }
- });
- return true;
+ const respond=httpsCallable(functions,"respondFriendRequest");
+ const result=await respond({requestId,accept:!!accept});
+ return result.data;
 }
 async function listFriends(){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
