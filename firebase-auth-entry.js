@@ -372,10 +372,12 @@ async function listFriends(){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
  const snap=await getDocs(query(collection(db,"friends"),where("ownerUid","==",user.uid)));
  const rows=await Promise.all(snap.docs.map(async x=>{
-  const f=x.data();const p=await getDoc(doc(db,"users",f.friendUid));
-  const profile=p.exists()?p.data():{};
+  const f=x.data();
+  const profileSnap=f.friendPlayerId?await getDoc(doc(db,"publicProfiles",f.friendPlayerId)):null;
+  const profile=profileSnap?.exists()?profileSnap.data():{};
   const presence=await getDoc(doc(db,"presence",f.friendUid));
-  const online=presence.exists()&&presence.data().online===true&&presence.data().lastSeen?.toMillis?.()>(Date.now()-120000);
+  const seen=presence.exists()?presence.data().lastSeen?.toMillis?.():0;
+  const online=presence.exists()&&presence.data().online===true&&seen>Date.now()-120000;
   return {uid:f.friendUid,playerId:f.friendPlayerId||profile.playerId||"",displayName:profile.displayName||"لاعب",avatarIndex:profile.avatarIndex||0,online};
  }));
  return rows;
