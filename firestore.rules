@@ -120,13 +120,17 @@ service cloud.firestore {
     match /friends/{friendshipId} {
       allow get, list: if signedIn() && resource.data.ownerUid == request.auth.uid;
       allow create: if signedIn()
-        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid is string
         && request.resource.data.friendUid is string
-        && request.resource.data.friendUid != request.auth.uid
+        && request.resource.data.ownerUid != request.resource.data.friendUid
+        && (request.resource.data.ownerUid == request.auth.uid
+          || request.resource.data.friendUid == request.auth.uid)
         && request.resource.data.keys().hasOnly(['ownerUid','friendUid','friendPlayerId','createdAt'])
         && request.resource.data.createdAt == request.time
-        && existsAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.friendUid + '__' + request.auth.uid))
-        && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.friendUid + '__' + request.auth.uid)).data.status == 'accepted';
+        && existsAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.ownerUid + '__' + request.resource.data.friendUid))
+        && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.ownerUid + '__' + request.resource.data.friendUid)).data.status == 'accepted'
+        && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.ownerUid + '__' + request.resource.data.friendUid)).data.fromUid == request.resource.data.ownerUid
+        && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.ownerUid + '__' + request.resource.data.friendUid)).data.toUid == request.resource.data.friendUid;
       allow update, delete: if false;
     }
 
