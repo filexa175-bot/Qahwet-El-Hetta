@@ -8,7 +8,7 @@ addon=r"""
 <!-- QH FRIENDS FLOATING ENTRY -->
 <style id="qh-friends-floating-style">
 #qh-friends-panel{display:none!important}
-#qh-friends-float-root{position:fixed;z-index:1250;top:calc(5px + env(safe-area-inset-top));right:max(105px,calc((100vw - 560px)/2 + 105px));direction:rtl;pointer-events:none}
+#qh-friends-float-root{position:fixed;z-index:1250;top:calc(5px + env(safe-area-inset-top));left:max(24px,calc((100vw - 560px)/2 + 24px));right:auto;direction:rtl;pointer-events:none;display:none}
 #qh-friends-float-button{pointer-events:auto;width:39px;height:34px;display:grid;place-items:center;position:relative;border:1px solid #b89a62;border-radius:12px;background:linear-gradient(145deg,#25464a,#142d31);color:#f5dfb8;box-shadow:0 3px 10px #0006;padding:0}
 #qh-friends-float-button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #qh-friends-float-badge{position:absolute;top:-5px;left:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:20px;background:#c74a42;color:#fff;font:900 10px Cairo,system-ui;display:none;align-items:center;justify-content:center;border:1px solid #f5dfb8}
@@ -22,13 +22,19 @@ addon=r"""
 (function(){
  const id=x=>document.getElementById(x);
  let placeholder=null, panel=null, timer=null;
+ function syncVisibility(){
+  const root=id("qh-friends-float-root");
+  const authenticated=!!window.QHAuth?.currentUser;
+  if(root)root.style.display=authenticated?"block":"none";
+  if(!authenticated&&id("qh-friends-modal"))closeModal();
+ }
  function ensure(){
   if(!id("qh-friends-float-root")){
    const root=document.createElement("div");root.id="qh-friends-float-root";
    root.innerHTML='<button id="qh-friends-float-button" type="button" aria-label="الأصدقاء والطلبات" title="الأصدقاء والطلبات"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M20 8v6M17 11h6"/></svg><span id="qh-friends-float-badge"></span></button>';
    document.body.appendChild(root);id("qh-friends-float-button").addEventListener("click",open);
   }
-  badge();if(!timer)timer=setInterval(badge,45000);
+  syncVisibility();badge();if(!timer)timer=setInterval(badge,45000);
  }
  function badge(){
   if(!window.QHAuth?.currentUser||!window.QHFriends)return;
@@ -55,7 +61,9 @@ addon=r"""
   modal.remove();panel=null;placeholder=null;
  }
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ensure,{once:true});else ensure();
- const observer=new MutationObserver(()=>{if(!id("qh-friends-float-root")||(window.QHAuth?.currentUser&&!timer))ensure();});observer.observe(document.documentElement,{childList:true,subtree:true});
+ // Keep the friends shortcut synchronized with Google-authenticated wallet/brands visibility.
+ setInterval(syncVisibility,1000);
+ const observer=new MutationObserver(()=>{if(!id("qh-friends-float-root"))ensure();else syncVisibility();});observer.observe(document.documentElement,{childList:true,subtree:true});
  window.QHFriendsFloatingOpen=open;
 })();
 </script>
