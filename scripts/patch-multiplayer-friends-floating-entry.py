@@ -55,7 +55,7 @@ addon=r"""
   modal.remove();panel=null;placeholder=null;
  }
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ensure,{once:true});else ensure();
- const observer=new MutationObserver(()=>{if(!id("qh-friends-float-root"))ensure();});observer.observe(document.documentElement,{childList:true,subtree:true});
+ const observer=new MutationObserver(()=>{if(!id("qh-friends-float-root")||(window.QHAuth?.currentUser&&!timer))ensure();});observer.observe(document.documentElement,{childList:true,subtree:true});
  window.QHFriendsFloatingOpen=open;
 })();
 </script>
