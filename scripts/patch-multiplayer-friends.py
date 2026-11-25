@@ -32,7 +32,10 @@ if 'id="qh-friends-panel"' not in src:
       </section>`:''}'''
     src = src.replace('      <footer class="qh-footer">', panel + '\n      <footer class="qh-footer">', 1)
 
-js_marker = '/* QH PLAYER ID COPY */
+js_marker = '/* QH FRIENDS UI */'
+if js_marker not in src:
+    js = r'''
+/* QH PLAYER ID COPY */
 async function copyPlayerId(){
  const button=document.querySelector('.qh-copy-id');
  const original=button?.textContent||'نسخ المعرف ↗';
@@ -40,10 +43,9 @@ async function copyPlayerId(){
  const notify=(message)=>{if(typeof window.QHShowToast==='function')window.QHShowToast(message);else{const status=document.getElementById('qh-friend-status');if(status)status.textContent=message;else alert(message);}};
  if(!/^[A-HJ-NP-Z2-9]{8}$/.test(playerId)){notify('المعرف غير جاهز؛ تأكد من تسجيل الدخول أولًا');return;}
  try{
-  const cap=window.Capacitor;
-  const clipboard=cap?.Plugins?.Clipboard;
-  if(clipboard?.write){await clipboard.write({string:playerId});}
-  else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(playerId);}
+  const clipboard=window.Capacitor?.Plugins?.Clipboard;
+  if(clipboard?.write) await clipboard.write({string:playerId});
+  else if(navigator.clipboard?.writeText) await navigator.clipboard.writeText(playerId);
   else{
    const field=document.createElement('textarea');field.value=playerId;field.setAttribute('readonly','');field.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px';
    document.body.appendChild(field);field.focus();field.select();field.setSelectionRange(0,field.value.length);
@@ -51,14 +53,9 @@ async function copyPlayerId(){
   }
   if(button){button.textContent='تم النسخ ✓';button.disabled=true;setTimeout(()=>{button.textContent=original;button.disabled=false;},1400);}
   notify('تم نسخ معرفك '+playerId+'؛ ابعته لصاحبك عشان يضيفك ☕');
- }catch(error){
-  notify('تعذر النسخ تلقائيًا؛ معرفك هو '+playerId);
- }
+ }catch(error){notify('تعذر النسخ تلقائيًا؛ معرفك هو '+playerId);}
 }
 
-/* QH FRIENDS UI */'
-if js_marker not in src:
-    js = r'''
 /* QH FRIENDS UI */
 function qhFriendNode(tag,text,cls){
  const el=document.createElement(tag);if(text!==undefined)el.textContent=String(text);if(cls)el.className=cls;return el;
