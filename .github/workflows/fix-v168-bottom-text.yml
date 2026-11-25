@@ -1,0 +1,124 @@
+name: Fix v168 bottom text only
+
+on:
+  push:
+    branches:
+      - fix/v168-bottom-text-only
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  patch-and-sign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download the exact v168 baseline APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: qahwet-el-hetta-signed-release-apk
+          repository: filexa175-bot/Qahwet-El-Hetta
+          run-id: 45480006197
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: baseline-artifact
+
+      - name: Extract and verify baseline APK
+        run: |
+          set -euo pipefail
+          unzip -l baseline-artifact/app-release.apk >/dev/null
+          mkdir -p work
+          cp baseline-artifact/app-release.apk work/v168-original.apk
+          sha256sum work/v168-original.apk
+
+      - name: Remove only the literal newline text from both HTML entry files
+        run: |
+          python3 - <<'PY'
+          import zipfile, hashlib, os
+          src = "work/v168-original.apk"
+          out = "work/v168-patched-unsigned.apk"
+          target = b"</script>\\n</body>"
+          replacement = b"</script>\n</body>"
+          with zipfile.ZipFile(src, "r") as zin, zipfile.ZipFile(out, "w") as zout:
+              names = zin.namelist()
+              for name in names:
+                  data = zin.read(name)
+                  if name in ("assets/public/index.html", "assets/public/game.html"):
+                      count = data.count(target)
+                      if count != 1:
+                          raise SystemExit(f"{name}: expected exactly one offending sequence, found {count}")
+                      data = data.replace(target, replacement, 1)
+                      if target in data:
+                          raise SystemExit(f"{name}: offending text remains")
+                  info = zin.getinfo(name)
+                  zout.writestr(info, data)
+          # Confirm every non-target payload is byte-for-byte unchanged.
+          with zipfile.ZipFile(src) as a, zipfile.ZipFile(out) as b:
+              if a.namelist() != b.namelist():
+                  raise SystemExit("APK entry list changed")
+              for name in a.namelist():
+                  if name not in ("assets/public/index.html", "assets/public/game.html") and a.read(name) != b.read(name):
+                      raise SystemExit(f"Unexpected payload change: {name}")
+              for name in ("assets/public/index.html", "assets/public/game.html"):
+                  x, y = a.read(name), b.read(name)
+                  if x.replace(target, replacement, 1) != y:
+                      raise SystemExit(f"Unexpected HTML change beyond the requested text fix: {name}")
+                  print(name, "verified; SHA256", hashlib.sha256(y).hexdigest())
+          PY
+
+      - name: Install Android build tools
+        uses: android-actions/setup-android@v3
+      - name: Install build tools package
+        run: sdkmanager "build-tools;35.0.0"
+
+      - name: Restore signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/qahwet-release.jks"
+          test -s "$RUNNER_TEMP/qahwet-release.jks"
+          echo "KEYSTORE=$RUNNER_TEMP/qahwet-release.jks" >> "$GITHUB_ENV"
+
+      - name: Align and sign the patched APK with the existing key
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          BT="$ANDROID_HOME/build-tools/35.0.0"
+          "$BT/zipalign" -p -f 4 work/v168-patched-unsigned.apk work/v168-aligned.apk
+          "$BT/apksigner" sign --ks "$KEYSTORE" --ks-pass env:ANDROID_KEYSTORE_PASSWORD --ks-key-alias "$ANDROID_KEY_ALIAS" --key-pass env:ANDROID_KEY_PASSWORD --out work/qahwet-el-hetta-v168-fixed.apk work/v168-aligned.apk
+          "$BT/apksigner" verify --verbose --print-certs work/qahwet-el-hetta-v168-fixed.apk
+
+      - name: Verify signature and exact fix
+        run: |
+          set -euo pipefail
+          EXPECTED_SHA1=$(python3 -c "import json; d=json.load(open('google-services.json')); c=d['client'][0]['oauth_client']; print(next(x['android_info']['certificate_hash'] for x in c if x.get('client_type') == 1).replace(':','').upper())")
+          ACTUAL_SHA1=$(keytool -printcert -jarfile work/qahwet-el-hetta-v168-fixed.apk | sed -n 's/.*SHA1: //p' | head -n 1 | tr -d ' :' | tr '[:lower:]' '[:upper:]')
+          echo "Expected Firebase SHA1: $EXPECTED_SHA1"
+          echo "Actual APK SHA1:       $ACTUAL_SHA1"
+          test -n "$EXPECTED_SHA1" && test "$EXPECTED_SHA1" = "$ACTUAL_SHA1"
+          python3 - <<'PY'
+          import zipfile
+          p="work/qahwet-el-hetta-v168-fixed.apk"
+          with zipfile.ZipFile(p) as z:
+              for n in ("assets/public/index.html", "assets/public/game.html"):
+                  b=z.read(n)
+                  assert b"</script>\\n</body>" not in b, n
+                  assert b"</script>\n</body>" in b, n
+                  print(n, "clean")
+          PY
+
+      - name: Upload fixed signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: qahwet-el-hetta-v168-fixed-signed-apk
+          path: work/qahwet-el-hetta-v168-fixed.apk
+          if-no-files-found: error
+          retention-days: 90
