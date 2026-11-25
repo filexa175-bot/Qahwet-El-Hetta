@@ -69,8 +69,10 @@ jobs:
                   print(name, "verified; SHA256", hashlib.sha256(y).hexdigest())
           PY
 
-      - name: Install Android build tools
+      - name: Install Android SDK platform tools
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Install build tools package
         run: sdkmanager "build-tools;35.0.0"
 
@@ -99,7 +101,21 @@ jobs:
       - name: Verify signature and exact fix
         run: |
           set -euo pipefail
-          EXPECTED_SHA1=$(python3 -c "import json; d=json.load(open('google-services.json')); c=d['client'][0]['oauth_client']; print(next(x['android_info']['certificate_hash'] for x in c if x.get('client_type') == 1).replace(':','').upper())")
+          EXPECTED_SHA1=$(python3 - <<'PY'
+          import json
+          d=json.load(open('google-services.json'))
+          values=[]
+          for client in d.get('client', []):
+              for oauth in client.get('oauth_client', []):
+                  if oauth.get('client_type') == 1:
+                      value=oauth.get('android_info', {}).get('certificate_hash')
+                      if value:
+                          values.append(value.replace(':','').upper())
+          if not values:
+              raise SystemExit('No Android OAuth certificate hash found in google-services.json')
+          print(values[0])
+          PY
+          )
           ACTUAL_SHA1=$(keytool -printcert -jarfile work/qahwet-el-hetta-v168-fixed.apk | sed -n 's/.*SHA1: //p' | head -n 1 | tr -d ' :' | tr '[:lower:]' '[:upper:]')
           echo "Expected Firebase SHA1: $EXPECTED_SHA1"
           echo "Actual APK SHA1:       $ACTUAL_SHA1"
