@@ -98,7 +98,14 @@ service cloud.firestore {
 
     // Requests can be created by the sender and answered only by the recipient.
     match /friendRequests/{requestId} {
-      allow get, list: if signedIn()
+      // A signed-in sender must be able to check an absent deterministic request
+      // document before creating it. Existing requests remain private to participants.
+      allow get: if signedIn()
+        && (!exists(/databases/$(database)/documents/friendRequests/$(requestId))
+          || resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+      // Queries must constrain results to the signed-in user as sender or recipient.
+      allow list: if signedIn()
         && (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
       allow create: if signedIn()
         && request.resource.data.fromUid == request.auth.uid
