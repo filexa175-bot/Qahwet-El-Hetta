@@ -110,7 +110,7 @@ for rel in ("www/index.html", "www/game.html"):
         html
     )
     # Remove the literal two-character backslash-n left by older builds.
-    html = html.replace("\\\\n<script>", "<script>")
+    html = html.replace("\\n<script>", "<script>")
     newline = chr(10)
     if "</body>" in html:
         html = html.replace("</body>", bridge + newline + "</body>", 1)
