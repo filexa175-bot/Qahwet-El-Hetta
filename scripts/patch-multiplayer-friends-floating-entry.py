@@ -62,4 +62,6 @@ addon=r"""
 """
 s=s.replace("</body>",addon+"\n</body>",1)
 p.write_text(s,encoding="utf-8")
-print("Persistent friends icon and modal entry added.")
+# Android WebView opens index.html by default; keep both entry documents identical.
+Path("www/index.html").write_text(s,encoding="utf-8")
+print("Persistent friends icon and modal entry added to both Android entry files.")
