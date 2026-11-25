@@ -40,6 +40,10 @@ jobs:
           mkdir app-source
           unzip -q "$SOURCE_ZIP" -d app-source
 
+      - name: Repair trailing HTML style blocks
+        run: python3 ../scripts/fix-trailing-html.py
+        working-directory: app-source
+
       - name: Inspect extracted application source
         working-directory: app-source
         run: |
