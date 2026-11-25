@@ -109,11 +109,14 @@ for rel in ("www/index.html", "www/game.html"):
         "",
         html
     )
+    # Remove the literal two-character backslash-n left by older builds.
+    html = html.replace("\\\\n<script>", "<script>")
+    newline = chr(10)
     if "</body>" in html:
-        html = html.replace("</body>", bridge + "\n</body>", 1)
+        html = html.replace("</body>", bridge + newline + "</body>", 1)
     else:
         # These game pages are distributed as body fragments without a closing body tag.
-        html = html.rstrip() + "\n" + bridge + "\n"
+        html = html.rstrip() + newline + bridge + newline
     path.write_text(html)
 
 print("Firebase auth bridge and bundle appended to both game pages.")
