@@ -97,3 +97,7 @@ async function qhRespondFriendRequest(id,accept){
     src = src[:close] + js + '\n' + src[close:]
 path.write_text(src, encoding='utf-8')
 print('Friend lookup, requests, and friend-list UI patched into game.html.')
+
+# Add the persistent floating friends launcher after the legacy panel is prepared.
+import runpy
+runpy.run_path("../scripts/patch-multiplayer-friends-floating-entry.py")
