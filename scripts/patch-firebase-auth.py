@@ -111,8 +111,8 @@ for rel in ("www/index.html", "www/game.html"):
     )
     # Remove literal backslash+n artifacts left by previous bridge injections.
     # Match the backslash character explicitly; do not confuse it with a real newline.
-    html = re.sub(r"\\\\n(?=<script)", "", html)
-    if re.search(r"\\\\n<script>", html):
+    html = re.sub(r"\\n(?=<script)", "", html)
+    if re.search(r"\\n<script>", html):
         raise SystemExit(f"Literal backslash-n remains before a script in {rel}; refusing to build.")
     newline = chr(10)
     if "</body>" in html:
