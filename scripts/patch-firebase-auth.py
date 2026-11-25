@@ -110,10 +110,10 @@ for rel in ("www/index.html", "www/game.html"):
         html
     )
     if "</body>" in html:
-        html = html.replace("</body>", bridge + "\\n</body>", 1)
+        html = html.replace("</body>", bridge + "\n</body>", 1)
     else:
         # These game pages are distributed as body fragments without a closing body tag.
-        html = html.rstrip() + "\\n" + bridge + "\\n"
+        html = html.rstrip() + "\n" + bridge + "\n"
     path.write_text(html)
 
 print("Firebase auth bridge and bundle appended to both game pages.")

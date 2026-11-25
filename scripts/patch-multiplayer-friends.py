@@ -4,9 +4,10 @@ path = Path('www/game.html')
 src = path.read_text(encoding='utf-8')
 marker = '''      <div class="qh-id-row"><div><small>PLAYER ID</small><b>${esc(S.playerId||"لسه مش مربوط بحساب")}</b></div><button class="qh-copy-id" onclick="copyPlayerId()">نسخ المعرف <span>↗</span></button></div>'''
 if 'id="qh-friends-panel"' not in src:
-    if marker not in src:
-        raise SystemExit('Expected PLAYER ID profile row was not found; refusing to patch an unknown layout.')
-    panel = marker + r'''
+    footer = '      <footer class="qh-footer">'
+    if footer not in src:
+        raise SystemExit('Expected main-screen footer was not found; refusing to patch an unknown layout.')
+    panel = r'''
       ${S.authenticated?`<section class="qh-panel" id="qh-friends-panel" style="margin-top:16px;padding:16px;border:1px solid #c49a5b66;border-radius:20px;background:linear-gradient(145deg,#173f43 0%,#102f35 100%);box-shadow:0 12px 28px #071d2040;color:#f8f0df">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:15px">
           <div aria-hidden="true" style="width:44px;height:44px;flex:0 0 44px;border-radius:14px;display:grid;place-items:center;background:#d4ad6c1c;border:1px solid #d4ad6c70">
@@ -29,7 +30,7 @@ if 'id="qh-friends-panel"' not in src:
           <div id="qh-friend-list" style="margin-top:8px;font-size:13px;color:#d9e2dc"></div>
         </div>
       </section>`:''}'''
-    src = src.replace(marker, panel, 1)
+    src = src.replace('      <footer class="qh-footer">', panel + '\n      <footer class="qh-footer">', 1)
 
 js_marker = '/* QH FRIENDS UI */'
 if js_marker not in src:

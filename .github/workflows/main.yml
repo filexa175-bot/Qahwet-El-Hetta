@@ -233,9 +233,20 @@ jobs:
           python3 ../scripts/patch-multiplayer-friends.py
           grep -Fq 'qh-friends-panel' www/game.html
           grep -Fq 'function qhRefreshFriends()' www/game.html
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('www/game.html').read_text(encoding='utf-8')
+          panel=s.index('id="qh-friends-panel"')
+          footer=s.index('<footer class="qh-footer">')
+          start=s.index('function startScreen(){')
+          assert start < panel < footer, 'Friends panel is not on the persistent home screen'
+          assert "${S.authenticated?`<section" in s, 'Friends panel must be Google-authenticated only'
+          assert s.count('id="qh-friends-panel"') == 1, 'Duplicate friends panels found'
+          print('Friends panel placement and Google-auth gate verified.')
+          PY
           python3 -c "import re; s=open('www/game.html').read(); x=re.findall(r'<script>([\\s\\S]*?)</script>',s); open('/tmp/qh-game-inline.js','w').write(x[-1])"
           node --check /tmp/qh-game-inline.js
-          echo "Friends UI markers and JavaScript syntax verified."
+          echo "Friends UI markers, placement, auth gate and JavaScript syntax verified."
 
       - name: Inspect extracted application source
         working-directory: app-source
