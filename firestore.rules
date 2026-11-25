@@ -113,32 +113,20 @@ service cloud.firestore {
         && request.resource.data.toUid != request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.keys().hasOnly(['fromUid','toUid','fromPlayerId','toPlayerId','status','createdAt']);
-      allow update: if signedIn()
-        && resource.data.toUid == request.auth.uid
-        && resource.data.status == 'pending'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','respondedAt'])
-        && request.resource.data.status in ['accepted','declined']
-        && request.resource.data.respondedAt == request.time;
+      // Acceptance/decline is performed by the trusted callable function.
+      allow update: if false;
       allow delete: if false;
     }
 
 
     // Reciprocal friend records are written only when an accepted request exists after the transaction.
+    // Friend records and counters are written only by the trusted callable function.
     match /friends/{friendshipId} {
       allow get, list: if signedIn() && resource.data.ownerUid == request.auth.uid;
-      allow create: if signedIn()
-        && request.resource.data.ownerUid is string
-        && request.resource.data.friendUid is string
-        && request.resource.data.ownerUid != request.resource.data.friendUid
-        && (request.resource.data.ownerUid == request.auth.uid
-          || request.resource.data.friendUid == request.auth.uid)
-        && request.resource.data.keys().hasOnly(['ownerUid','friendUid','friendPlayerId','createdAt'])
-        && request.resource.data.createdAt == request.time
-        && existsAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.ownerUid + '__' + request.resource.data.friendUid))
-        && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.ownerUid + '__' + request.resource.data.friendUid)).data.status == 'accepted'
-        && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.ownerUid + '__' + request.resource.data.friendUid)).data.fromUid == request.resource.data.ownerUid
-        && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.ownerUid + '__' + request.resource.data.friendUid)).data.toUid == request.resource.data.friendUid;
-      allow update, delete: if false;
+      allow create, update, delete: if false;
+    }
+    match /friendCounts/{uid} {
+      allow read, write: if false;
     }
 
     // Presence is visible only to the player and accepted friends.
