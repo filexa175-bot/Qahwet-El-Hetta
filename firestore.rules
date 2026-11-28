@@ -118,8 +118,7 @@ service cloud.firestore {
         && friendshipId == request.resource.data.ownerUid + '__' + request.resource.data.friendUid
         && request.resource.data.createdAt == request.time
         && request.resource.data.keys().hasOnly(['ownerUid','friendUid','friendPlayerId','createdAt'])
-        && requestAccepted(request.resource.data.ownerUid,request.resource.data.friendUid)
-        && request.auth.uid == request.resource.data.friendUid;
+        && requestAccepted(request.resource.data.ownerUid,request.resource.data.friendUid);
       allow update, delete: if false;
     }
 
