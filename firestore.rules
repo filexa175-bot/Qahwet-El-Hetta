@@ -20,6 +20,13 @@ service cloud.firestore {
         && getAfter(frPath(b,a)).data.ownerUid == b
         && getAfter(frPath(b,a)).data.friendUid == a;
     }
+    function newlyAccepted(a,b) {
+      return exists(reqPath(a,b))
+        && get(reqPath(a,b)).data.status == 'pending'
+        && existsAfter(reqPath(a,b))
+        && getAfter(reqPath(a,b)).data.status == 'accepted'
+        && getAfter(reqPath(a,b)).data.respondedAt == request.time;
+    }
     function validCounter(uid,other) {
       let p = countPath(uid);
       let oldValue = exists(p) ? get(p).data.count : 0;
@@ -146,7 +153,7 @@ service cloud.firestore {
         && (exists(countPath(uid))
           ? request.resource.data.count == get(countPath(uid)).data.count + 1
           : request.resource.data.count == 1)
-        && (existsAfter(reqPath(uid,request.auth.uid)) || existsAfter(reqPath(request.auth.uid,uid)));
+        && (newlyAccepted(uid,request.auth.uid) || newlyAccepted(request.auth.uid,uid));
       allow delete: if false;
     }
 
