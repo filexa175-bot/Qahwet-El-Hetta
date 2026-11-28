@@ -8,9 +8,13 @@ service cloud.firestore {
     function countPath(uid) { return /databases/$(database)/documents/friendCounts/$(uid); }
     function requestAccepted(a,b) {
       let p = /databases/$(database)/documents/friendRequests/$(a + '__' + b);
-      return existsAfter(p) && getAfter(p).data.fromUid == a
-        && getAfter(p).data.toUid == b && getAfter(p).data.status == 'accepted'
-        && getAfter(p).data.toUid == request.auth.uid;
+      let q = /databases/$(database)/documents/friendRequests/$(b + '__' + a);
+      return (existsAfter(p) && getAfter(p).data.fromUid == a
+          && getAfter(p).data.toUid == b && getAfter(p).data.status == 'accepted'
+          && getAfter(p).data.toUid == request.auth.uid)
+        || (existsAfter(q) && getAfter(q).data.fromUid == b
+          && getAfter(q).data.toUid == a && getAfter(q).data.status == 'accepted'
+          && getAfter(q).data.toUid == request.auth.uid);
     }
     function acceptedTransition(a,b) {
       let p = /databases/$(database)/documents/friendRequests/$(a + '__' + b);
