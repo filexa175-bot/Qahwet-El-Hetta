@@ -33,6 +33,7 @@ service cloud.firestore {
       return existsAfter(p) && getAfter(p).data.uid == uid
         && getAfter(p).data.count == oldValue + 1
         && getAfter(p).data.count <= 15
+        && getAfter(p).data.lastFriendUid == other
         && getAfter(p).data.updatedAt == request.time;
     }
 
@@ -148,12 +149,16 @@ service cloud.firestore {
         && request.resource.data.uid == uid
         && request.resource.data.count is int
         && request.resource.data.count <= 15
+        && request.resource.data.lastFriendUid is string
+        && request.resource.data.lastFriendUid != uid
+        && request.auth.uid in [uid, request.resource.data.lastFriendUid]
         && request.resource.data.updatedAt == request.time
-        && request.resource.data.keys().hasOnly(['uid','count','updatedAt'])
+        && request.resource.data.keys().hasOnly(['uid','count','lastFriendUid','updatedAt'])
         && (exists(countPath(uid))
           ? request.resource.data.count == get(countPath(uid)).data.count + 1
           : request.resource.data.count == 1)
-        && (newlyAccepted(uid,request.auth.uid) || newlyAccepted(request.auth.uid,uid));
+        && (newlyAccepted(uid,request.resource.data.lastFriendUid)
+          || newlyAccepted(request.resource.data.lastFriendUid,uid));
       allow delete: if false;
     }
 
