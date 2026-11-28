@@ -347,14 +347,16 @@ async function sendFriendRequest(playerId){
   const requestId=user.uid+"__"+target.uid;
   const ref=doc(db,"friendRequests",requestId);
   const old=await getDoc(ref);if(old.exists())throw new Error("فيه طلب صداقة موجود بالفعل");
-  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:senderPlayerId,toPlayerId:target.playerId,status:"pending",createdAt:serverTimestamp()});
+  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:senderPlayerId,toPlayerId:target.playerId,fromDisplayName:cleanName(senderSnap.data().displayName)||"لاعب",toDisplayName:cleanName(target.displayName)||"لاعب",status:"pending",createdAt:serverTimestamp()});
   return target;
 }
 async function listFriendRequests(){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
  const incoming=await getDocs(query(collection(db,"friendRequests"),where("toUid","==",user.uid)));
  const outgoing=await getDocs(query(collection(db,"friendRequests"),where("fromUid","==",user.uid)));
- return {incoming:incoming.docs.map(x=>({id:x.id,...x.data()})).filter(x=>x.status==="pending"),outgoing:outgoing.docs.map(x=>({id:x.id,...x.data()})).filter(x=>x.status==="pending")};
+ const enrich=async snap=>Promise.all(snap.docs.map(async x=>{const d=x.data();let displayName=d.fromDisplayName||"";if(!displayName&&d.fromPlayerId){try{const p=await getDoc(doc(db,"publicProfiles",d.fromPlayerId));if(p.exists())displayName=p.data().displayName||"";}catch(_){}}return {id:x.id,...d,fromDisplayName:displayName||"لاعب"};}));
+ const [inRows,outRows]=await Promise.all([enrich(incoming),enrich(outgoing)]);
+ return {incoming:inRows.filter(x=>x.status==="pending"),outgoing:outRows.filter(x=>x.status==="pending")};
 }
 async function respondFriendRequest(requestId,accept){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
@@ -364,22 +366,14 @@ async function respondFriendRequest(requestId,accept){
   if(!requestSnap.exists())throw new Error("طلب الصداقة غير موجود");
   const requestData=requestSnap.data();
   if(requestData.toUid!==user.uid||requestData.status!=="pending")throw new Error("طلب الصداقة لم يعد متاحًا");
-  if(!accept){
-   tx.update(requestRef,{status:"declined",respondedAt:serverTimestamp()});
-   return {accepted:false};
-  }
+  if(!accept){tx.update(requestRef,{status:"declined",respondedAt:serverTimestamp()});return {accepted:false};}
   const fromUid=requestData.fromUid,toUid=requestData.toUid;
   if(!fromUid||!toUid||fromUid===toUid||toUid!==user.uid)throw new Error("بيانات طلب الصداقة غير صحيحة");
-  const fromFriendRef=doc(db,"friends",fromUid+"__"+toUid);
-  const toFriendRef=doc(db,"friends",toUid+"__"+fromUid);
-  const fromCountRef=doc(db,"friendCounts",fromUid);
-  const toCountRef=doc(db,"friendCounts",toUid);
-  const [fromFriend,toFriend,fromCountSnap,toCountSnap]=await Promise.all([
-   tx.get(fromFriendRef),tx.get(toFriendRef),tx.get(fromCountRef),tx.get(toCountRef)
-  ]);
-  if(fromFriend.exists()||toFriend.exists())throw new Error("اللاعبان أصدقاء بالفعل");
-  const fromCount=fromCountSnap.exists()?Number(fromCountSnap.data().count||0):0;
-  const toCount=toCountSnap.exists()?Number(toCountSnap.data().count||0):0;
+  const fromFriendRef=doc(db,"friends",fromUid+"__"+toUid),toFriendRef=doc(db,"friends",toUid+"__"+fromUid);
+  const fromCountRef=doc(db,"friendCounts",fromUid),toCountRef=doc(db,"friendCounts",toUid);
+  const [ff,tf,fc,tc]=await Promise.all([tx.get(fromFriendRef),tx.get(toFriendRef),tx.get(fromCountRef),tx.get(toCountRef)]);
+  if(ff.exists()||tf.exists())throw new Error("اللاعبان أصدقاء بالفعل");
+  const fromCount=fc.exists()?Number(fc.data().count||0):0,toCount=tc.exists()?Number(tc.data().count||0):0;
   if(fromCount>=15||toCount>=15)throw new Error("وصل أحد اللاعبين إلى الحد الأقصى: 15 صديقًا");
   tx.update(requestRef,{status:"accepted",respondedAt:serverTimestamp()});
   tx.set(fromFriendRef,{ownerUid:fromUid,friendUid:toUid,friendPlayerId:requestData.toPlayerId||"",createdAt:serverTimestamp()});
