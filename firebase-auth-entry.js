@@ -339,10 +339,15 @@ async function sendFriendRequest(playerId){
   const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
   const target=await findPlayerById(playerId);if(!target)throw new Error("مش لاقيين لاعب بالمعرف ده");
   if(target.self)throw new Error("مينفعش تبعت طلب لنفسك");
+  // Read the authoritative sender profile; the game state may not be exposed as window.S.
+  const senderSnap=await getDoc(doc(db,"users",user.uid));
+  if(!senderSnap.exists())throw new Error("ملف حسابك غير مكتمل؛ سجّل الدخول مرة أخرى");
+  const senderPlayerId=String(senderSnap.data().playerId||"").trim().toUpperCase();
+  if(!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/.test(senderPlayerId))throw new Error("معرّف حسابك غير جاهز؛ أعد تسجيل الدخول");
   const requestId=user.uid+"__"+target.uid;
   const ref=doc(db,"friendRequests",requestId);
   const old=await getDoc(ref);if(old.exists())throw new Error("فيه طلب صداقة موجود بالفعل");
-  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:window.S?.playerId||"",toPlayerId:target.playerId,status:"pending",createdAt:serverTimestamp()});
+  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:senderPlayerId,toPlayerId:target.playerId,status:"pending",createdAt:serverTimestamp()});
   return target;
 }
 async function listFriendRequests(){
