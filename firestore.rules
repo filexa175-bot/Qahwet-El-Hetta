@@ -9,12 +9,14 @@ service cloud.firestore {
     function requestAccepted(a,b) {
       let p = /databases/$(database)/documents/friendRequests/$(a + '__' + b);
       return existsAfter(p) && getAfter(p).data.fromUid == a
-        && getAfter(p).data.toUid == b && getAfter(p).data.status == 'accepted';
+        && getAfter(p).data.toUid == b && getAfter(p).data.status == 'accepted'
+        && getAfter(p).data.toUid == request.auth.uid;
     }
     function acceptedTransition(a,b) {
       let p = /databases/$(database)/documents/friendRequests/$(a + '__' + b);
-      return exists(p) && get(p).data.status == 'pending'
-        && existsAfter(p) && getAfter(p).data.status == 'accepted';
+      let q = /databases/$(database)/documents/friendRequests/$(b + '__' + a);
+      return (exists(p) && get(p).data.status == 'pending' && existsAfter(p) && getAfter(p).data.status == 'accepted')
+        || (exists(q) && get(q).data.status == 'pending' && existsAfter(q) && getAfter(q).data.status == 'accepted');
     }
     match /users/{uid} {
       allow read: if owns(uid);
@@ -131,7 +133,7 @@ service cloud.firestore {
         && request.resource.data.count >= 1
         && request.resource.data.lastFriendUid is string
         && request.resource.data.lastFriendUid != uid
-        && request.auth.uid == request.resource.data.lastFriendUid
+        && request.auth.uid in [uid, request.resource.data.lastFriendUid]
         && request.resource.data.updatedAt == request.time
         && request.resource.data.keys().hasOnly(['uid','count','lastFriendUid','updatedAt'])
         && (exists(countPath(uid))
