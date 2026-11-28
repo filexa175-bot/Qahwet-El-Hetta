@@ -123,8 +123,8 @@ service cloud.firestore {
         && (request.resource.data.status == 'declined'
           || (accepted(resource.data.fromUid,resource.data.toUid)
             && pairExists(resource.data.fromUid,resource.data.toUid)
-            && validCounter(resource.data.fromUid,resource.data.toUid)
-            && validCounter(resource.data.toUid,resource.data.fromUid)));
+            && existsAfter(countPath(resource.data.fromUid))
+            && existsAfter(countPath(resource.data.toUid))));
       allow delete: if false;
     }
 
@@ -157,6 +157,7 @@ service cloud.firestore {
         && (exists(countPath(uid))
           ? request.resource.data.count == get(countPath(uid)).data.count + 1
           : request.resource.data.count == 1)
+        && pairExists(uid,request.resource.data.lastFriendUid)
         && (newlyAccepted(uid,request.resource.data.lastFriendUid)
           || newlyAccepted(request.resource.data.lastFriendUid,uid));
       allow delete: if false;
