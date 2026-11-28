@@ -2,7 +2,6 @@ import { Capacitor } from '@capacitor/core';
 import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider, signInWithCredential, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, collection, query, where, getDocs, updateDoc, onSnapshot } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 const firebaseConfig = {
@@ -18,7 +17,6 @@ let auth;
 try { auth=Capacitor.isNativePlatform()?initializeAuth(app,{persistence:indexedDBLocalPersistence}):getAuth(app); }
 catch(e){ auth=getAuth(app); }
 const db=getFirestore(app);
-const functions=getFunctions(app, 'us-central1');
 const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function makeId(){let out="";for(let i=0;i<8;i++)out+=alphabet[Math.floor(Math.random()*alphabet.length)];return out;}
 function cleanName(v){return String(v||"").trim().replace(/[<>]/g,"").slice(0,18);}
@@ -355,9 +353,36 @@ async function listFriendRequests(){
 }
 async function respondFriendRequest(requestId,accept){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
- const respond=httpsCallable(functions,"respondFriendRequest");
- const result=await respond({requestId,accept:!!accept});
- return result.data;
+ const requestRef=doc(db,"friendRequests",String(requestId||""));
+ return runTransaction(db,async tx=>{
+  const requestSnap=await tx.get(requestRef);
+  if(!requestSnap.exists())throw new Error("طلب الصداقة غير موجود");
+  const requestData=requestSnap.data();
+  if(requestData.toUid!==user.uid||requestData.status!=="pending")throw new Error("طلب الصداقة لم يعد متاحًا");
+  if(!accept){
+   tx.update(requestRef,{status:"declined",respondedAt:serverTimestamp()});
+   return {accepted:false};
+  }
+  const fromUid=requestData.fromUid,toUid=requestData.toUid;
+  if(!fromUid||!toUid||fromUid===toUid||toUid!==user.uid)throw new Error("بيانات طلب الصداقة غير صحيحة");
+  const fromFriendRef=doc(db,"friends",fromUid+"__"+toUid);
+  const toFriendRef=doc(db,"friends",toUid+"__"+fromUid);
+  const fromCountRef=doc(db,"friendCounts",fromUid);
+  const toCountRef=doc(db,"friendCounts",toUid);
+  const [fromFriend,toFriend,fromCountSnap,toCountSnap]=await Promise.all([
+   tx.get(fromFriendRef),tx.get(toFriendRef),tx.get(fromCountRef),tx.get(toCountRef)
+  ]);
+  if(fromFriend.exists()||toFriend.exists())throw new Error("اللاعبان أصدقاء بالفعل");
+  const fromCount=fromCountSnap.exists()?Number(fromCountSnap.data().count||0):0;
+  const toCount=toCountSnap.exists()?Number(toCountSnap.data().count||0):0;
+  if(fromCount>=15||toCount>=15)throw new Error("وصل أحد اللاعبين إلى الحد الأقصى: 15 صديقًا");
+  tx.update(requestRef,{status:"accepted",respondedAt:serverTimestamp()});
+  tx.set(fromFriendRef,{ownerUid:fromUid,friendUid:toUid,friendPlayerId:requestData.toPlayerId||"",createdAt:serverTimestamp()});
+  tx.set(toFriendRef,{ownerUid:toUid,friendUid:fromUid,friendPlayerId:requestData.fromPlayerId||"",createdAt:serverTimestamp()});
+  tx.set(fromCountRef,{uid:fromUid,count:fromCount+1,updatedAt:serverTimestamp()});
+  tx.set(toCountRef,{uid:toUid,count:toCount+1,updatedAt:serverTimestamp()});
+  return {accepted:true,fromCount:fromCount+1,toCount:toCount+1};
+ });
 }
 async function listFriends(){
  const user=auth.currentUser;if(!user)throw new Error("سجل دخولك الأول");
