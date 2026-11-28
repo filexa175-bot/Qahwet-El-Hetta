@@ -116,7 +116,13 @@ async function saveProfile(user){
       }
       if(snap.exists()){
         const p=snap.data();
-        if(p.playerId) await setDoc(doc(db,"publicProfiles",p.playerId),{uid,playerId:p.playerId,displayName:p.displayName||"لاعب",avatarIndex:Number(p.avatarIndex)||0,updatedAt:serverTimestamp()},{merge:true});
+        // Backfill legacy profiles whose displayName was never saved.
+        const profileName=cleanName(p.displayName)||cleanName(user.displayName)||"لاعب جديد";
+        if(!p.displayName){
+          await setDoc(ref,{displayName:profileName,updatedAt:serverTimestamp()},{merge:true});
+          p.displayName=profileName;
+        }
+        if(p.playerId) await setDoc(doc(db,"publicProfiles",p.playerId),{uid,playerId:p.playerId,displayName:profileName,avatarIndex:Number(p.avatarIndex)||0,updatedAt:serverTimestamp()},{merge:true});
         window.QHApplyProfile?.(p,user);
         setTimeout(loadWallet,350);
         return p;
@@ -347,7 +353,7 @@ async function sendFriendRequest(playerId){
   const requestId=user.uid+"__"+target.uid;
   const ref=doc(db,"friendRequests",requestId);
   const old=await getDoc(ref);if(old.exists())throw new Error("فيه طلب صداقة موجود بالفعل");
-  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:senderPlayerId,toPlayerId:target.playerId,fromDisplayName:cleanName(senderSnap.data().displayName)||"لاعب",toDisplayName:cleanName(target.displayName)||"لاعب",status:"pending",createdAt:serverTimestamp()});
+  await setDoc(ref,{fromUid:user.uid,toUid:target.uid,fromPlayerId:senderPlayerId,toPlayerId:target.playerId,fromDisplayName:cleanName(senderSnap.data().displayName)||cleanName(user.displayName)||"لاعب جديد",toDisplayName:cleanName(target.displayName)||"لاعب",status:"pending",createdAt:serverTimestamp()});
   return target;
 }
 async function listFriendRequests(){
