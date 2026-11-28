@@ -379,8 +379,8 @@ async function respondFriendRequest(requestId,accept){
   tx.update(requestRef,{status:"accepted",respondedAt:serverTimestamp()});
   tx.set(fromFriendRef,{ownerUid:fromUid,friendUid:toUid,friendPlayerId:requestData.toPlayerId||"",createdAt:serverTimestamp()});
   tx.set(toFriendRef,{ownerUid:toUid,friendUid:fromUid,friendPlayerId:requestData.fromPlayerId||"",createdAt:serverTimestamp()});
-  tx.set(fromCountRef,{uid:fromUid,count:fromCount+1,updatedAt:serverTimestamp()});
-  tx.set(toCountRef,{uid:toUid,count:toCount+1,updatedAt:serverTimestamp()});
+  tx.set(fromCountRef,{uid:fromUid,count:fromCount+1,lastFriendUid:toUid,updatedAt:serverTimestamp()});
+  tx.set(toCountRef,{uid:toUid,count:toCount+1,lastFriendUid:fromUid,updatedAt:serverTimestamp()});
   return {accepted:true,fromCount:fromCount+1,toCount:toCount+1};
  });
 }
