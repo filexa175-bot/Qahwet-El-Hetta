@@ -84,7 +84,7 @@ async function qhRefreshFriends(){
   if(!data.incoming.length&&!data.outgoing.length)requestsBox.append(qhFriendNode('p','لا توجد طلبات صداقة حاليًا.'));
   data.incoming.forEach(item=>{
    const row=qhFriendNode('div',undefined);row.style.cssText='display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:9px;margin:7px 0;border:1px solid #b98b50;border-radius:12px';
-   row.append(qhFriendNode('span','PLAYER ID: '+(item.fromPlayerId||'غير متاح')));
+   row.append(qhFriendNode('span',item.fromDisplayName||'لاعب'));
    const actions=qhFriendNode('span',undefined);const yes=qhFriendNode('button','قبول','pri');const no=qhFriendNode('button','رفض','sec');
    yes.type=no.type='button';yes.addEventListener('click',()=>qhRespondFriendRequest(item.id,true));no.addEventListener('click',()=>qhRespondFriendRequest(item.id,false));actions.append(yes,no);row.append(actions);requestsBox.append(row);
   });
@@ -93,7 +93,7 @@ async function qhRefreshFriends(){
   if(!friends.length)friendsBox.append(qhFriendNode('p','لسه مفيش أصدقاء مضافين.'));
   friends.forEach(friend=>{
    const row=qhFriendNode('div',undefined);row.style.cssText='display:flex;justify-content:space-between;gap:8px;padding:8px 2px;border-bottom:1px solid #b98b5055';
-   row.append(qhFriendNode('span',(friend.displayName||'لاعب')+' · '+(friend.playerId||'')));
+   row.append(qhFriendNode('span',friend.displayName||'لاعب'));
    row.append(qhFriendNode('b',friend.online?'متصل الآن':'غير متصل'));friendsBox.append(row);
   });
  }catch(e){requestsBox.textContent=e?.message||'تعذر تحميل طلبات الصداقة';friendsBox.textContent='تعذر تحميل قائمة الأصدقاء';}
